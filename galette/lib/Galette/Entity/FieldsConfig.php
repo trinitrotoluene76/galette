@@ -59,6 +59,17 @@ class FieldsConfig
     const VISIBLE = 1;
     const ADMIN = 2;
 
+    const TYPE_STR = 0;
+    const TYPE_HIDDEN = 1;
+    const TYPE_BOOL = 2;
+    const TYPE_INT = 3;
+    const TYPE_DEC = 4;
+    const TYPE_DATE = 5;
+    const TYPE_TXT = 6;
+    const TYPE_PASS = 7;
+    const TYPE_EMAIL = 8;
+    const TYPE_URL = 9;
+
     private $_all_required;
     private $_all_visibles;
     //private $error = array();
@@ -66,16 +77,9 @@ class FieldsConfig
     private $_table;
     private $_defaults = null;
 
-    const TABLE = 'fields_config';
+    private $_form_elements = array();
 
-    private $_types = array(
-        'text',
-        'text',
-        'boolean',
-        'integer',
-        'integer',
-        'integer'
-    );
+    const TABLE = 'fields_config';
 
     /*
      * Fields that are not visible in the
@@ -321,6 +325,57 @@ class FieldsConfig
     public function getNonRequired()
     {
         return $this->_non_required;
+    }
+   
+    /**
+     * Retrieve form elements
+     *
+     * @return array
+     */
+    public function getFormElements()
+    {
+        global $zdb, $log;
+
+        if ( !count($this->_form_elements) > 0 ) {
+            try {
+                foreach ( array_keys($this->_categorized_fields) as $c ) {
+                    $cat = (object) array('id' => '', 'label' => '', 'elements' => array());
+                    $cat->id = $c;
+                    $cat->label = FieldsCategories::getLabel($c);
+
+                    $elements = $this->_categorized_fields[$c];
+                    $cat->elements = array();
+                    foreach($elements as $elt) {
+                        $o = (object)$elt;
+
+                        //retrieve table fields
+                        $infos = $zdb->db->describeTable(PREFIX_DB . $this->_table);
+                        if ( $o->visible == 0 ) {
+                            $o->type = self::TYPE_HIDDEN;
+                        } else if (preg_match ('/date/', $o->field_id) ) {
+                            $o->type = self::TYPE_DATE;
+                        } else if (preg_match ('/bool/', $o->field_id) ) {
+                            $o->type = self::TYPE_BOOL;
+                        } else {
+                            $o->type = self::TYPE_STR;
+                        }
+                        $o->max_length = $infos[$o->field_id]['LENGTH'];
+                        $o->default = $infos[$o->filed_id]['DEFAULT'];
+                        $o->datatype = $infos[$o->field_id]['DATA_TYPE'];
+
+                        $cat->elements[] = $o;
+                    }
+
+                    $this->_form_elements[] = $cat;
+                }
+            } catch ( Exception $e ) {
+                $log->log(
+                    'An error occured getting form elements',
+                    PEAR_LOG_ERR
+                );
+            }
+        }
+        return $this->_form_elements;
     }
 
     /**
