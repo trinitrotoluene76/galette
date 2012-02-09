@@ -334,6 +334,18 @@ class FieldsConfig
     }
 
     /**
+     * Retrieve a specific label
+     *
+     * @param string $k Key
+     *
+     * @return string
+     */
+    public function getLabel($k)
+    {
+        return $this->_all_labels[$k];
+    }
+
+    /**
      * Get visible fields
      *
      * @return array of all visibles fields
