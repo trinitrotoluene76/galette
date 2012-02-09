@@ -268,6 +268,73 @@ if ( isset($head_redirect) ) {
 }
 // /self_adh specific
 
+
+// Load needed Zend classes
+require_once 'Zend/Loader.php';
+Zend_Loader::loadClass('Zend_View');
+Zend_Loader::loadClass('Zend_Form');
+Zend_Loader::loadClass('Zend_Form_SubForm');
+Zend_Loader::loadClass('Zend_Form_Element_Text');
+Zend_Loader::loadClass('Zend_Form_Decorator_HtmlTag');
+Zend_Loader::loadClass('Zend_Form_Decorator_Label');
+Zend_Loader::loadClass('Zend_Validate_EmailAddress');
+require_once WEB_ROOT . 'classes/forms/text_element.class.php';
+
+//require_once 'Zend/Form.php';
+$zform = new Zend_Form;
+$zform->setView(new Zend_View());
+
+$zform->setAction('/resource/process')
+    ->setMethod('post');
+
+$zform->setAttrib('id', 'login');
+
+$a = new Adherent();
+$fc = new FieldsConfig(Adherent::TABLE, $a->fields);
+$categories = $fc->getCategorizedFields();
+
+foreach ( $categories as $c ) {
+    $zf = new Zend_Form_SubForm();
+    $zf->setLegend('Subform' . round(0, 50));
+    $elements = array();
+    foreach ( $c as $field ) {
+        $elt =  new GaletteTextElement($field['field_id']);
+        $elt->setLabel($fc->getLabel($field['field_id']));
+        //$zf->addElement($elt);
+        $elements[] = $elt;
+    }
+    $zf->addElements($elements);
+    $zf->getDecorator('HtmlTag')->setOption('tag', 'div');
+
+    /*$zf->clearDecorators();
+    $zf->addDecorator('FormElements')
+    ->addDecorator('HtmlTag', array('tag' => '<fieldset>'))
+    ->addDecorator('Form');*/
+
+
+    /*$zf->setElementDecorators(array(
+    array('ViewHelper'),
+    array('Errors',array('class'=>'error')),
+    array('Label', array('separator'=>' ')),
+    array('HtmlTag', array('tag' => 'p')),
+    ));*/
+    $zform->addSubForm($zf, 'subform_' . rand(0,50));
+}
+
+$zform->getDecorator('HtmlTag')->setOption('tag', 'div');
+$zform->removeDecorator('DtDdWrapper');
+// change the class on the outer <dl> tag
+$zform->getDecorator('HtmlTag')->setOption('class', 'galette_form');
+
+$zform->setSubFormDecorators(
+    array(
+        'FormElements',
+        'Fieldset'
+    )
+);
+
+$tpl->assign('zform', $zform);
+
 // display page
 $content = $tpl->fetch('member.tpl');
 $tpl->assign('content', $content);
