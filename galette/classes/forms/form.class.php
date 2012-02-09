@@ -36,7 +36,7 @@
  */
 
 /** @ignore */
-
+require_once 'checkbox_element.class.php';
 /**
  * Form element
  *
@@ -82,17 +82,33 @@ class GaletteForm extends Zend_Form
     {
         $a = new Adherent();
         $fc = new FieldsConfig(Adherent::TABLE, $a->fields);
+        $elements = $fc->getFormElements();
         $categories = $fc->getCategorizedFields();
 
-        foreach ( $categories as $c ) {
+        foreach ( $elements as $elt ) {
             $zf = new Zend_Form_SubForm();
 
-            $zf->setLegend('Subform' . round(0, 50));
+            $zf->setLegend($elt->label);
             $elements = array();
-            foreach ( $c as $field ) {
-                $elt =  new GaletteTextElement($field['field_id']);
-                $elt->setLabel($fc->getLabel($field['field_id']));
-                $elements[] = $elt;
+            foreach ( $elt->elements as $field ) {
+                switch ( $field->type ) {
+                case FieldsConfig::TYPE_HIDDEN:
+                    $class = 'GaletteHiddenElement';
+                    break;
+                case FieldsConfig::TYPE_BOOL:
+                    $class = 'GaletteCheckboxElement';
+                    break;
+                default:
+                case FieldsConfig::TYPE_STR:
+                    $class = 'GaletteTextElement';
+                }
+                $element =  new $class($field->field_id);
+                if ( $field->required == 1 ) {
+                    $element->setRequired(true);
+                }
+                $element->setLabel($field->label);
+                $this->_validators($element, $field);
+                $elements[] = $element;
             }
             $zf->addElements($elements);
 
@@ -104,6 +120,36 @@ class GaletteForm extends Zend_Form
         }
     }
 
+    /**
+     * Append validators
+     *
+     * @param mixed  $element The form element we want
+     * @param object $field   Field configuration
+     *
+     * @return void
+     */
+    private function _validators($element, $field)
+    {
+        if ( $field->max_length != ''
+            && ($field->type == FieldsConfig::TYPE_STR
+            || $field->type == FieldsConfig::TYPE_PASS)
+        ) {
+            $element->addValidator(
+                'StringLength',
+                false,
+                array(0, $field->max_length)
+            );
+        }
+
+        if ( $field->type == FieldsConfig::TYPE_PASS ) {
+            
+        }
+
+        if ( $field->type == FieldsConfig::TYPE_EMAIL ) {
+            
+        }
+    }
+    
     /**
      * Loads default decorators. Change display according to
      * Galette's theming conventions.

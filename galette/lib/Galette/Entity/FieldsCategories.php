@@ -57,6 +57,8 @@ class FieldsCategories
     const TABLE = 'fields_categories';
     const PK = 'id_field_category';
 
+    private $_labels = array();
+
     const ADH_CATEGORY_IDENTITY = 1;
     const ADH_CATEGORY_GALETTE = 2;
     const ADH_CATEGORY_CONTACT = 3;
@@ -65,19 +67,19 @@ class FieldsCategories
         array(
             'id'         => 1,
             'table_name' => Adherent::TABLE,
-            'category'   => 'Identity',
+            'category'   => 'Identity:',
             'position'   => 1
         ),
         array(
             'id'         => 2,
             'table_name' => Adherent::TABLE,
-            'category'   => 'Galette-related data',
+            'category'   => 'Galette-related data:',
             'position'   => 2
         ),
         array(
             'id'         => 3,
             'table_name' => Adherent::TABLE,
-            'category'   => 'Contact information',
+            'category'   => 'Contact information:',
             'position'   => 3
         )
     );
@@ -109,6 +111,39 @@ class FieldsCategories
                 Analog::WARNING
             );
             return false;
+        }
+    }
+
+    /**
+     * Retrieve category label
+     *
+     * @param integer $id Id
+     *
+     * @return string
+     */
+    public function getLabel($id)
+    {
+        global $zdb, $log;
+
+        if ( !$this->_labels[$id] ) {
+            try {
+                $select = new Zend_Db_Select($zdb->db);
+                $select->from(PREFIX_DB . self::TABLE)
+                    ->where(self::PK . ' = ?', $id);
+
+                $res = $select->query()->fetch();
+                $this->_labels[$id] = $res->category;
+                return $res->category;
+            } catch ( Exception $e ) {
+                $log->log(
+                    'Something went wrong trying to get label for category ' . $id,
+                    PEAR_LOG_ERR
+                );
+                $log->log(
+                    'Query was: ' . $select->__toString(),
+                    PEAR_LOG_ERR
+                );
+            }
         }
     }
 
