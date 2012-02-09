@@ -8,7 +8,7 @@
         <li{if $current eq 'members'} class="current_tab"{/if}><a href="?table=members">{_T string="Members"}</a></li>
     </ul>*}
     <form action="config_fields.php" method="post" id="config_fields_form">
-    <div {*class="tabbed" *}id="{$current}_tab">
+	<div id="{$current}_tab">
         {*<a href="#" title="{_T string="Add a new category"}" id="add_category">{_T string="Add new category"}</a>*}
 {foreach item=category from=$categories name=categories_list}
         <fieldset class="cssform large" id="cat_{$smarty.foreach.categories_list.iteration}">
