@@ -1763,16 +1763,16 @@ legend {
     background-color:white;
 }
 
-.cssform{ background-color:white; }
-.cssform ul{
+.cssform, .galette_form { background-color:white; }
+.cssform ul, .galette_form ul{
     display: inline-block;
     padding:0;
 }
-.cssform li{
+.cssform li, .galette_form li{
     clear:none;
 }
-
-.cssform p, .cssform div.p{
+.cssform p, .cssform div.p,
+.galette_form p, .galette_form div.p {
     clear: left;
     margin: 0;
     padding: 5px 0;
@@ -1783,14 +1783,17 @@ legend {
 
 /* no border on the first 'p' child */
 .cssform p:nth-child(2), #addfield p:first-child, .cssform legend+p/*, .cssform div.p:nth-child(2), .cssform div p:nth-child(1)*/{
+.galette_form p:nth-child(2)  {
     border-top:none;
 }
 /* If there is a div, the preceding rules does not apply to the correct element :( */
-.cssform div p:nth-child(2) {
+.cssform div p:nth-child(2),
+.galette_form div p:nth-child(2) {
     border-top:1px dashed gray;
 }
 /* But w do not whant border on the first element thought :) */
-.cssform div p:nth-child(1) {
+.cssform div p:nth-child(1),
+.galette_form div p:nth-child(1) {
     border-top:none;
 }
 
@@ -1802,6 +1805,15 @@ legend {
     padding-left:0;
     border:none;
     height:auto;
+}
+
+.galette_form legend {
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+    background: url("jquery-ui/images/ui-bg_glass_65_ffb619_1x400.png") repeat-x scroll 50% 50% #FFB619;
+    border: 1px solid #AAAAAA;
+    color: #212121;
+    font-weight: normal;
 }
 
 .bline{
@@ -1823,7 +1835,17 @@ th.bline, td.bline{
     text-align:left;
 }
 
-.cssform .bline{
+.galette_form label {
+    font-weight: bold;
+    background-color: #DDDDFF;
+    padding:0.1em 0.3em;
+    margin-bottom:1em;
+    display:block;
+    vertical-align:top;
+    padding:5px;
+}
+
+.cssform .bline, .galette_form label{
     display: inline-block;
     margin: 0 0 0 -22em;
     width: 19.9em;
