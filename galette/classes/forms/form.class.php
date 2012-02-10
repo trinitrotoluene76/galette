@@ -37,6 +37,8 @@
 
 /** @ignore */
 require_once 'checkbox_element.class.php';
+require_once 'date_element.class.php';
+
 /**
  * Form element
  *
@@ -97,6 +99,9 @@ class GaletteForm extends Zend_Form
                     break;
                 case FieldsConfig::TYPE_BOOL:
                     $class = 'GaletteCheckboxElement';
+                    break;
+                case FieldsConfig::TYPE_DATE:
+                    $class = 'GaletteDateElement';
                     break;
                 default:
                 case FieldsConfig::TYPE_STR:
