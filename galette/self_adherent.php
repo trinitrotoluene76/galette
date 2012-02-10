@@ -268,21 +268,6 @@ if ( isset($head_redirect) ) {
 }
 // /self_adh specific
 
-// Load needed Zend classes
-require_once 'Zend/Loader.php';
-Zend_Loader::loadClass('Zend_View');
-Zend_Loader::loadClass('Zend_Form');
-Zend_Loader::loadClass('Zend_Form_SubForm');
-Zend_Loader::loadClass('Zend_Form_Element_Text');
-Zend_Loader::loadClass('Zend_Form_Element_Hidden');
-Zend_Loader::loadClass('Zend_Form_Element_Checkbox');
-Zend_Loader::loadClass('Zend_Form_Decorator_HtmlTag');
-Zend_Loader::loadClass('Zend_Form_Decorator_Label');
-Zend_Loader::loadClass('Zend_Validate_EmailAddress');
-Zend_Loader::loadClass('Zend_Form_Decorator_FormElements');
-
-require_once WEB_ROOT . 'classes/forms/text_element.class.php';
-require_once WEB_ROOT . 'classes/forms/hidden_element.class.php';
 require_once WEB_ROOT . 'classes/forms/form.class.php';
 
 $gform = new GaletteForm(Adherent::TABLE);

@@ -36,6 +36,7 @@
  */
 
 /** @ignore */
+require_once 'Zend/Form/Element/Text.php';
 
 /**
  * Text form element
