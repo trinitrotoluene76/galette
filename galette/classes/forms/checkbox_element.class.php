@@ -36,6 +36,7 @@
  */
 
 /** @ignore */
+require_once 'Zend/Form/Element/Checkbox.php';
 
 /**
  * Checkbox form element

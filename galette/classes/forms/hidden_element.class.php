@@ -36,6 +36,7 @@
  */
 
 /** @ignore */
+require_once 'Zend/Form/Element/Hidden.php';
 
 /**
  * Hidden form element

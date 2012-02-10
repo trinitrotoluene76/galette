@@ -36,6 +36,15 @@
  */
 
 /** @ignore */
+require_once 'Zend/View.php';
+require_once 'Zend/Form.php';
+require_once 'Zend/Form/SubForm.php';
+require_once 'Zend/Form/Decorator/HtmlTag.php';
+require_once 'Zend/Form/Decorator/Label.php';
+require_once 'Zend/Form/Decorator/FormElements.php';
+require_once 'Zend/Validate/EmailAddress.php';
+require_once 'text_element.class.php';
+require_once 'hidden_element.class.php';
 require_once 'checkbox_element.class.php';
 require_once 'date_element.class.php';
 
