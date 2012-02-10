@@ -334,39 +334,49 @@ class FieldsConfig
      */
     public function getFormElements()
     {
-        global $zdb, $log;
+        global $zdb, $log, $login;
 
         if ( !count($this->_form_elements) > 0 ) {
             try {
                 foreach ( array_keys($this->_categorized_fields) as $c ) {
-                    $cat = (object) array('id' => '', 'label' => '', 'elements' => array());
+                    $cat = (object) array(
+                        'id' => '',
+                        'label' => '',
+                        'elements' => array()
+                    );
                     $cat->id = $c;
                     $cat->label = FieldsCategories::getLabel($c);
 
                     $elements = $this->_categorized_fields[$c];
                     $cat->elements = array();
-                    foreach($elements as $elt) {
+                    foreach ( $elements as $elt ) {
                         $o = (object)$elt;
 
-                        //retrieve table fields
-                        $infos = $zdb->db->describeTable(PREFIX_DB . $this->_table);
-                        if ( $o->visible == 0 ) {
-                            $o->type = self::TYPE_HIDDEN;
-                        } else if (preg_match ('/date/', $o->field_id) ) {
-                            $o->type = self::TYPE_DATE;
-                        } else if (preg_match ('/bool/', $o->field_id) ) {
-                            $o->type = self::TYPE_BOOL;
-                        } else {
-                            $o->type = self::TYPE_STR;
-                        }
-                        $o->max_length = $infos[$o->field_id]['LENGTH'];
-                        $o->default = $infos[$o->filed_id]['DEFAULT'];
-                        $o->datatype = $infos[$o->field_id]['DATA_TYPE'];
+                        if ( $o->visible == self::ADMIN && !$login->isAdmin() ) {
+                            //retrieve table fields
+                            $infos = $zdb->db->describeTable(
+                                PREFIX_DB . $this->_table
+                            );
+                            if ( $o->visible == 0 ) {
+                                $o->type = self::TYPE_HIDDEN;
+                            } else if (preg_match('/date/', $o->field_id) ) {
+                                $o->type = self::TYPE_DATE;
+                            } else if (preg_match('/bool/', $o->field_id) ) {
+                                $o->type = self::TYPE_BOOL;
+                            } else {
+                                $o->type = self::TYPE_STR;
+                            }
+                            $o->max_length = $infos[$o->field_id]['LENGTH'];
+                            $o->default = $infos[$o->field_id]['DEFAULT'];
+                            $o->datatype = $infos[$o->field_id]['DATA_TYPE'];
 
-                        $cat->elements[] = $o;
+                            $cat->elements[] = $o;
+                        }
                     }
 
-                    $this->_form_elements[] = $cat;
+                    if ( count($cat) > 0 ) {
+                        $this->_form_elements[] = $cat;
+                    }
                 }
             } catch ( Exception $e ) {
                 $log->log(
