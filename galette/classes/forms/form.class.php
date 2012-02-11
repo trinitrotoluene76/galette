@@ -47,6 +47,7 @@ require_once 'text_element.class.php';
 require_once 'hidden_element.class.php';
 require_once 'checkbox_element.class.php';
 require_once 'date_element.class.php';
+require_once 'radio_element.class.php';
 
 /**
  * Form element
@@ -79,8 +80,11 @@ class GaletteForm extends Zend_Form
         $this->_table = $table;
         parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
-        $this->setView(new Zend_View());
+        $view = new Zend_View();
+        $this->setView($view);
         $this->setMethod('post');
+        $helper = new GaletteHelperFormRadio();
+        $view->registerHelper($helper, 'gformRadio');
         $this->_loadElements();
     }
 
@@ -112,11 +116,19 @@ class GaletteForm extends Zend_Form
                 case FieldsConfig::TYPE_DATE:
                     $class = 'GaletteDateElement';
                     break;
+                case FieldsConfig::TYPE_RADIO:
+                    $class = 'GaletteRadioElement';
+                    break;
                 default:
                 case FieldsConfig::TYPE_STR:
                     $class = 'GaletteTextElement';
                 }
                 $element =  new $class($field->field_id);
+                
+                if ( $field->field_id == 'titre_adh' ) {
+                    $element->setMultiOptions(Politeness::getList());
+                }
+
                 if ( $field->required == 1 ) {
                     $element->setRequired(true);
                 }
