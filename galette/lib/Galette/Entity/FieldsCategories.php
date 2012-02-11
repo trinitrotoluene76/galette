@@ -148,6 +148,33 @@ class FieldsCategories
     }
 
     /**
+     * Store the categories
+     *
+     * @param array $categories Categories
+     *
+     * @return boolean
+     */
+    public static function setCategories($categories) {
+        global $zdb, $log;
+
+        try {
+            $zdb->db->beginTransaction();
+            foreach ( $categories as $k=>$v ) {
+                $res = $zdb->db->update(
+                    PREFIX_DB . self::TABLE,
+                    array('position' => $k),
+                    $zdb->db->quoteInto(self::PK . ' = ?', $v)
+                );
+                echo 'res: ' . $res . ' (key: ' . $k .', val: ' . $v . '<br/>';
+            }
+            $zdb->db->commit();
+        } catch ( Exception $e ) {
+            $zdb->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
      * Set default fields categories at install time
      *
      * @param Db $zdb Database instance
