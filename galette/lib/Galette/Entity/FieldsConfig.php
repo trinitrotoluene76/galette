@@ -338,17 +338,17 @@ class FieldsConfig
         global $zdb, $log, $login;
 
         if ( !count($this->_form_elements) > 0 ) {
+            $categories = FieldsCategories::getList();
             try {
-                foreach ( array_keys($this->_categorized_fields) as $c ) {
+                foreach ( $categories as $c ) {
+                    $cpk = FieldsCategories::PK;
                     $cat = (object) array(
-                        'id' => '',
-                        'label' => '',
+                        'id' => $c->$cpk,
+                        'label' => $c->category,
                         'elements' => array()
-                    );
-                    $cat->id = $c;
-                    $cat->label = FieldsCategories::getLabel($c);
+                    );                    
 
-                    $elements = $this->_categorized_fields[$c];
+                    $elements = $this->_categorized_fields[$c->$cpk];
                     $cat->elements = array();
                     foreach ( $elements as $elt ) {
                         $o = (object)$elt;
