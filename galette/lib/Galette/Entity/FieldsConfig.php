@@ -352,7 +352,7 @@ class FieldsConfig
                     foreach ( $elements as $elt ) {
                         $o = (object)$elt;
 
-                        if ( $o->visible == self::ADMIN && !$login->isAdmin() ) {
+                        if ( !($o->visible == self::ADMIN && !$login->isAdmin()) ) {
                             //retrieve table fields
                             $infos = $zdb->db->describeTable(
                                 PREFIX_DB . $this->_table
