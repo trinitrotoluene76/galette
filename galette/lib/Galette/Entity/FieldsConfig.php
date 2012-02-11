@@ -69,6 +69,7 @@ class FieldsConfig
     const TYPE_PASS = 7;
     const TYPE_EMAIL = 8;
     const TYPE_URL = 9;
+    const TYPE_RADIO = 10;
 
     private $_all_required;
     private $_all_visibles;
@@ -363,6 +364,8 @@ class FieldsConfig
                                 $o->type = self::TYPE_DATE;
                             } else if (preg_match('/bool/', $o->field_id) ) {
                                 $o->type = self::TYPE_BOOL;
+                            } else if ( $o->field_id == 'titre_adh' ) {
+                                $o->type = self::TYPE_RADIO;
                             } else {
                                 $o->type = self::TYPE_STR;
                             }

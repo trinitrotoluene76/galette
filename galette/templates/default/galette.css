@@ -1852,6 +1852,15 @@ th.bline, td.bline{
     padding-right: 20px;
 }
 
+label.simplelabel {
+    margin: 0;
+    display: inline;
+    width: auto;
+    vertical-align: baseline;
+    background: inherit;
+    font-weight: inherit;
+}
+
 .cssform textarea{
     width:90%;
     height: 150px;
