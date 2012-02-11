@@ -104,6 +104,7 @@ if ( isset($_POST) && count($_POST) > 0 ) {
     //okay, we've got the new array, we send it to the
     //Object that will store it in the database
     $success = $fc->setFields($res);
+    FieldsCategories::setCategories($_POST['categories']);
     if ( $success === true ) {
         $success_detected[] = _T("Fields configuration has been successfully stored");
     } else {
