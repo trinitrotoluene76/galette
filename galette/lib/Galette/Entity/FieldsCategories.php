@@ -165,7 +165,6 @@ class FieldsCategories
                     array('position' => $k),
                     $zdb->db->quoteInto(self::PK . ' = ?', $v)
                 );
-                echo 'res: ' . $res . ' (key: ' . $k .', val: ' . $v . '<br/>';
             }
             $zdb->db->commit();
         } catch ( Exception $e ) {
