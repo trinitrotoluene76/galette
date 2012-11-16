@@ -1,3 +1,5 @@
+{extends file="page.tpl"}
+{block name="content"}
         <section id="desktop">
             <header class="ui-state-default ui-state-active">
                 {_T string="Activities"}
@@ -77,3 +79,4 @@
                 });
             });
         </script>
+{/block}
