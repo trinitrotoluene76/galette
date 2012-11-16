@@ -265,7 +265,7 @@ class I18n
     */
     public function getFlag()
     {
-        return GALETTE_BASE_PATH . GALETTE_TPL_SUBDIR . 'images/' . $this->_flag;
+        return GALETTE_THEME . 'images/' . $this->_flag;
     }
 
     /**

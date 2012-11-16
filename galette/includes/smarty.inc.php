@@ -37,6 +37,8 @@
  * @since     Available since 0.63
  */
 
+use \Slim\Extras\Views\Smarty as SmartyView;
+
 if (!defined('GALETTE_ROOT')) {
        die("Sorry. You can't access directly to this file");
 }
@@ -44,10 +46,59 @@ if (!defined('GALETTE_ROOT')) {
 if ( !defined('GALETTE_TPL_SUBDIR') ) {
     define('GALETTE_TPL_SUBDIR', 'templates/' . $preferences->pref_theme . '/');
 }
-$tpl = new Galette\Core\Smarty($plugins, $i18n, $preferences, $logo, $login);
-$tpl->muteExpectedErrors();
 
-$tpl->registerClass('GaletteMail', '\Galette\Core\GaletteMail');
+if ( !defined('GALETTE_THEME') ) {
+    define('GALETTE_THEME', 'themes/' . $preferences->pref_theme . '/');
+}
+
+
+SmartyView::$smartyDirectory = GALETTE_SMARTY_PATH;
+SmartyView::$smartyTemplatesDirectory = GALETTE_ROOT . GALETTE_TPL_SUBDIR;
+SmartyView::$smartyCompileDirectory = GALETTE_COMPILE_DIR;
+SmartyView::$smartyCacheDirectory = GALETTE_CACHE_DIR;
+
+SmartyView::$smartyExtensions = array(
+    GALETTE_SLIM_EXTRAS_PATH . 'Views/Extension/Smarty',
+    GALETTE_ROOT . 'includes/smarty_plugins'
+);
+
+$smarty = SmartyView::getInstance();
+$smarty->assign('login', $login);
+$smarty->assign('logo', $logo);
+$smarty->assign('template_subdir', GALETTE_THEME);
+foreach ( $plugins->getTplAssignments() as $k=>$v ) {
+    $smarty->assign($k, $v);
+}
+$smarty->assign('headers', $plugins->getTplHeaders());
+$smarty->assign('plugin_actions', $plugins->getTplAdhActions());
+$smarty->assign('plugin_detailled_actions', $plugins->getTplAdhDetailledActions());
+$smarty->assign('jquery_dir', 'js/jquery/');
+$smarty->assign('jquery_version', JQUERY_VERSION);
+$smarty->assign('jquery_ui_version', JQUERY_UI_VERSION);
+$smarty->assign('jquery_markitup_version', JQUERY_MARKITUP_VERSION);
+$smarty->assign('scripts_dir', 'js/');
+$smarty->assign('PAGENAME', basename($_SERVER['SCRIPT_NAME']));
+$smarty->assign('galette_base_path', './');
+/** FIXME: on certains pages PHP notice that GALETTE_VERSION does not exists
+although it appears correctly*/
+$smarty->assign('GALETTE_VERSION', GALETTE_VERSION);
+$smarty->assign('GALETTE_MODE', GALETTE_MODE);
+/** galette_lang should be removed and languages used instead */
+$smarty->assign('galette_lang', $i18n->getAbbrev());
+$smarty->assign('languages', $i18n->getList());
+$smarty->assign('plugins', $plugins);
+$smarty->assign('preferences', $preferences);
+$smarty->assign('pref_slogan', $preferences->pref_slogan);
+$smarty->assign('pref_theme', $preferences->pref_theme);
+$smarty->assign('pref_editor_enabled', $preferences->pref_editor_enabled);
+$smarty->assign('pref_mail_method', $preferences->pref_mail_method);
+if ( isset($session['mailing']) ) {
+    $smarty->assign('existing_mailing', true);
+}
+
+$smarty->muteExpectedErrors();
+
+$smarty->registerClass('GaletteMail', '\Galette\Core\GaletteMail');
 
 /**
 * Return member name. Smarty cannot directly use static functions
@@ -62,7 +113,7 @@ function getMemberName($params)
     extract($params);
     return Galette\Entity\Adherent::getSName($id);
 }
-$tpl->registerPlugin(
+$smarty->registerPlugin(
     'function',
     'memberName',
     'getMemberName'

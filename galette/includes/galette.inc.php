@@ -80,6 +80,8 @@ use Galette\Common\ClassLoader;
 use Analog\Analog as Analog;
 use Galette\Core;
 require_once GALETTE_ROOT . 'lib/Galette/Common/ClassLoader.php';
+require_once GALETTE_SLIM_PATH . 'Slim/Slim.php';
+
 $galetteLoader = new ClassLoader('Galette', GALETTE_ROOT . 'lib');
 $zendLoader = new ClassLoader('Zend', GALETTE_ZEND_PATH);
 $zendLoader->setNamespaceSeparator('_');
@@ -91,6 +93,9 @@ $galetteLoader->register();
 $zendLoader->register();
 $analogLoader->register();
 $smartyLoader->register();
+
+\Slim\Slim::registerAutoloader();
+require_once GALETTE_SLIM_EXTRAS_PATH . 'Views/Smarty.php';
 
 //start profiling
 if (defined('GALETTE_XHPROF_PATH')
