@@ -1,3 +1,5 @@
+{extends file="$parent_tpl"}
+{block name="content"}
         <form action="{if $login->isLogged()}ajouter_adherent.php{else}self_adherent.php{/if}" method="post" enctype="multipart/form-data" id="form">
         <div class="bigtable">
 {if $self_adh and $head_redirect}
@@ -38,7 +40,7 @@
     {if $visibles.nom_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.nom_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="nom_adh" class="bline">{_T string="Name:"}</label>
-                        <input type="text" name="nom_adh" id="nom_adh" value="{$member->name|escape}" maxlength="50" {$disabled.nom_adh}{if $required.nom_adh eq 1} required{/if}/>
+						<input type="text" name="nom_adh" id="nom_adh" value="{$member->name|escape}" maxlength="50"{if isset($disabled.nom_adh)} {$disabled.nom_adh}{/if}{if $required.nom_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="nom_adh" value="{$member->name|escape}"/>
@@ -46,7 +48,7 @@
     {if $visibles.prenom_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.prenom_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="prenom_adh" class="bline">{_T string="First name:"}</label>
-                        <input type="text" name="prenom_adh" id="prenom_adh" value="{$member->surname}" maxlength="50" {$disabled.prenom_adh}{if $required.prenom_adh eq 1} required{/if}/>
+						<input type="text" name="prenom_adh" id="prenom_adh" value="{$member->surname}" maxlength="50"{if isset($disabled.prenom_adh)} {$disabled.prenom_adh}{/if}{if isset($required.prenom_adh) and $required.prenom_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="prenom_adh" value="{$member->surname}"/>
@@ -58,7 +60,7 @@
                     </p>
                     <p id="company_field"{if !$member->isCompany()} class="hidden"{/if}>
                         <label for="societe_adh" class="bline">{_T string="Company:"}</label>
-                        <input type="text" name="societe_adh" id="societe_adh" value="{$member->company_name}" maxlength="200" {$disabled.societe_adh}{if $required.societe_adh eq 1} required{/if}/>
+						<input type="text" name="societe_adh" id="societe_adh" value="{$member->company_name}" maxlength="200"{if isset($disabled.societe_adh)} {$disabled.societe_adh}{/if}{if isset($required.societe_adh) and $required.societe_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="societe_adh" value="{$member->company_name}"/>
@@ -66,7 +68,7 @@
     {if $visibles.pseudo_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.pseudo_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="pseudo_adh" class="bline">{_T string="Nickname:"}</label>
-                        <input type="text" name="pseudo_adh" id="pseudo_adh" value="{$member->nickname|htmlspecialchars}" maxlength="20" {$disabled.pseudo_adh}{if $required.pseudo_adh eq 1} required{/if}/>
+						<input type="text" name="pseudo_adh" id="pseudo_adh" value="{$member->nickname|htmlspecialchars}" maxlength="20"{if isset($disabled.pseudo_adh)} {$disabled.pseudo_adh}{/if}{if isset($required.pseudo_adh) and $required.pseudo_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="pseudo_adh" value="{$member->nickname|htmlspecialchars}"/>
@@ -74,7 +76,7 @@
     {if $visibles.ddn_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.ddn_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="ddn_adh" class="bline">{_T string="Birth date:"}</label>
-                        <input type="text" name="ddn_adh" id="ddn_adh" value="{$member->birthdate}" maxlength="10" {$disabled.ddn_adh}{if $required.ddn_adh eq 1} required{/if}/> <span class="exemple">{_T string="(yyyy-mm-dd format)"}</span>
+						<input type="text" name="ddn_adh" id="ddn_adh" value="{$member->birthdate}" maxlength="10"{if isset($disabled.ddn_adh)} {$disabled.ddn_adh}{/if}{if isset($required.ddn_adh) and $required.ddn_adh eq 1} required{/if}/> <span class="exemple">{_T string="(yyyy-mm-dd format)"}</span>
                     </p>
     {else}
                     <input type="hidden" name="ddn_adh" value="{$member->birthdate}"/>
@@ -82,7 +84,7 @@
     {if $visibles.lieu_naissance eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.lieu_naissance eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="lieu_naissance" class="bline">{_T string="Birthplace:"}</label>
-                        <input type="text" name="lieu_naissance" id="lieu_naissance" value="{$member->birth_place}" {$disabled.lieu_naissance}{if $required.lieu_naissance eq 1} required{/if}/>
+                        <input type="text" name="lieu_naissance" id="lieu_naissance" value="{$member->birth_place}"{if isset($disabled.lieu_naissance)} {$disabled.lieu_naissance}{/if}{if isset($required.lieu_naissance) and $required.lieu_naissance eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="lieu_naissance" value="{$member->birth_place}"/>
@@ -90,7 +92,7 @@
     {if $visibles.prof_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.prof_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="prof_adh" class="bline">{_T string="Profession:"}</label>
-                        <input type="text" name="prof_adh" id="prof_adh" value="{$member->job|htmlspecialchars}" maxlength="150" {$disabled.prof_adh}{if $required.prof_adh eq 1} required{/if}/>
+						<input type="text" name="prof_adh" id="prof_adh" value="{$member->job|htmlspecialchars}" maxlength="150"{if isset($disabled.prof_adh)} {$disabled.prof_adh}{/if}{if isset($required.prof_adh) and $required.prof_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="prof_adh" value="{$member->job|htmlspecialchars}"/>
@@ -98,7 +100,7 @@
     {if $visibles.pref_lang eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.pref_lang eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="pref_lang" class="bline">{_T string="Language:"}</label>
-                        <select name="pref_lang" id="pref_lang" {$disabled.pref_lang}{if $required.pref_lang eq 1} required{/if}>
+						<select name="pref_lang" id="pref_lang"{if isset($disabled.pref_lang)} {$disabled.pref_lang}{/if}{if isset($required.pref_lang) and $required.pref_lang eq 1} required{/if}>
                             {foreach item=langue from=$languages}
                                 <option value="{$langue->getID()}"{if $member->language eq $langue->getID()} selected="selected"{/if} style="background:url({$langue->getFlag()}) no-repeat;padding-left:30px;">{$langue->getName()|ucfirst}</option>
                             {/foreach}
@@ -116,10 +118,10 @@
     {if $visibles.adresse_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.adresse_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="adresse_adh" class="bline">{_T string="Address:"}</label>
-                        <input type="text" class="large" name="adresse_adh" id="adresse_adh" value="{$member->adress|htmlspecialchars}" maxlength="150" {$disabled.adresse_adh}{if $required.adresse_adh eq 1} required{/if}/><br/>
+						<input type="text" class="large" name="adresse_adh" id="adresse_adh" value="{$member->adress|htmlspecialchars}" maxlength="150"{if isset($disabled.adresse_adh)} {$disabled.adresse_adh}{/if}{if isset($required.adresse_adh) and $required.adresse_adh eq 1} required{/if}/><br/>
                         {* FIXME: A-t-on réellement besoin de deux lignes pour une adresse ? *}
                         <label for="adresse2_adh" class="bline libelle">{_T string="Address:"} {_T string=" (continuation)"}</label>
-                        <input type="text" class="large" name="adresse2_adh" id="adresse2_adh" value="{$member->adress_continuation|htmlspecialchars}" maxlength="150" {$disabled.adresse2_adh}{if $required.adresse2_adh eq 1} required{/if}/>
+						<input type="text" class="large" name="adresse2_adh" id="adresse2_adh" value="{$member->adress_continuation|htmlspecialchars}" maxlength="150"{if isset($disabled.adresse2_adh)} {$disabled.adresse2_adh}{/if}{if isset($required.adresse2_adh) and $required.adresse2_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="adresse_adh" value="{$member->adress|htmlspecialchars}"/>
@@ -128,7 +130,7 @@
     {if $visibles.cp_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.cp_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="cp_adh" class="bline">{_T string="Zip Code:"}</label>
-                        <input type="text" name="cp_adh" id="cp_adh" value="{$member->zipcode}" maxlength="10" {$disabled.cp_adh}{if $required.cp_adh eq 1} required{/if}/>
+						<input type="text" name="cp_adh" id="cp_adh" value="{$member->zipcode}" maxlength="10"{if isset($disabled.cp_adh)} {$disabled.cp_adh}{/if}{if isset($required.cp_adh) and $required.cp_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="cp_adh" value="{$member->zipcode}"/>
@@ -136,7 +138,7 @@
     {if $visibles.ville_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.ville_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="ville_adh" class="bline">{_T string="City:"}</label>
-                        <input type="text" name="ville_adh" id="ville_adh" value="{$member->town|htmlspecialchars}" maxlength="50" {$disabled.ville_adh}{if $required.ville_adh eq 1} required{/if}/>
+						<input type="text" name="ville_adh" id="ville_adh" value="{$member->town|htmlspecialchars}" maxlength="50"{if isset($disabled.ville_adh)} {$disabled.ville_adh}{/if}{if isset($required.ville_adh) and $required.ville_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="ville_adh" value="{$member->town|htmlspecialchars}"/>
@@ -144,7 +146,7 @@
     {if $visibles.pays_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.pays_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="pays_adh" class="bline">{_T string="Country:"}</label>
-                        <input type="text" name="pays_adh" id="pays_adh" value="{$member->country|htmlspecialchars}" maxlength="50" {$disabled.pays_adh}{if $required.pays_adh eq 1} required{/if}/>
+						<input type="text" name="pays_adh" id="pays_adh" value="{$member->country|htmlspecialchars}" maxlength="50"{if isset($disabled.pays_adh)} {$disabled.pays_adh}{/if}{if isset($required.pays_adh) and $required.pays_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="pays_adh" value="{$member->country|htmlspecialchars}"/>
@@ -152,7 +154,7 @@
     {if $visibles.tel_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.tel_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="tel_adh" class="bline">{_T string="Phone:"}</label>
-                        <input type="text" name="tel_adh" id="tel_adh" value="{$member->phone}" maxlength="20" {$disabled.tel_adh}{if $required.tel_adh eq 1} required{/if}/>
+						<input type="text" name="tel_adh" id="tel_adh" value="{$member->phone}" maxlength="20"{if isset($disabled.tel_adh)} {$disabled.tel_adh}{/if}{if isset($required.tel_adh) and $required.tel_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="tel_adh" value="{$member->phone}"/>
@@ -160,7 +162,7 @@
     {if $visibles.gsm_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.gsm_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="gsm_adh" class="bline">{_T string="Mobile phone:"}</label>
-                        <input type="text" name="gsm_adh" id="gsm_adh" value="{$member->gsm}" maxlength="20" {$disabled.gsm_adh}{if $required.gsm_adh eq 1} required{/if}/>
+						<input type="text" name="gsm_adh" id="gsm_adh" value="{$member->gsm}" maxlength="20"{if isset($disabled.gsm_adh)} {$disabled.gsm_adh}{/if}{if isset($required.gsm_adh) and $required.gsm_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="gsm_adh" value="{$member->gsm}"/>
@@ -168,7 +170,7 @@
     {if $visibles.email_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.email_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="email_adh" class="bline">{_T string="E-Mail:"}</label>
-                        <input type="text" name="email_adh" id="email_adh" value="{$member->email}" maxlength="150" size="30" {$disabled.email_adh}{if $required.email_adh eq 1} required{/if}/>
+						<input type="text" name="email_adh" id="email_adh" value="{$member->email}" maxlength="150" size="30"{if isset($disabled.email_adh)} {$disabled.email_adh}{/if}{if isset($required.email_adh) and $required.email_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="email_adh" value="{$member->email}"/>
@@ -176,7 +178,7 @@
     {if $visibles.url_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.url_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="url_adh" class="bline">{_T string="Website:"}</label>
-                        <input type="text" name="url_adh" id="url_adh" value="{$member->website}" maxlength="200" size="30" {$disabled.url_adh}{if $required.url_adh eq 1} required{/if}/>
+						<input type="text" name="url_adh" id="url_adh" value="{$member->website}" maxlength="200" size="30"{if isset($disabled.url_adh)} {$disabled.url_adh}{/if}{if isset($required.url_adh) and $required.url_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="url_adh" value="{$member->website}"/>
@@ -184,7 +186,7 @@
     {if $visibles.icq_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.icq_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="icq_adh" class="bline">{_T string="ICQ:"}</label>
-                        <input type="text" name="icq_adh" id="icq_adh" value="{$member->icq}" maxlength="20" {$disabled.icq_adh}{if $required.icq_adh eq 1}required{/if}/>
+						<input type="text" name="icq_adh" id="icq_adh" value="{$member->icq}" maxlength="20"{if isset($disabled.icq_adh)} {$disabled.icq_adh}{/if}{if isset($required.icq_adh) and $required.icq_adh eq 1}required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="icq_adh" value="{$member->icq}"/>
@@ -192,7 +194,7 @@
     {if $visibles.jabber_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.jabber_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="jabber_adh" class="bline">{_T string="Jabber:"}</label>
-                        <input type="text" name="jabber_adh" id="jabber_adh" value="{$member->jabber}" maxlength="150" size="30" {$disabled.jabber_adh}{if $required.jabber_adh eq 1} required{/if}/>
+						<input type="text" name="jabber_adh" id="jabber_adh" value="{$member->jabber}" maxlength="150" size="30"{if isset($disabled.jabber_adh)} {$disabled.jabber_adh}{/if}{if isset($required.jabber_adh) and $required.jabber_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="jabber_adh" value="{$member->jabber}"/>
@@ -200,7 +202,7 @@
     {if $visibles.msn_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.msn_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="msn_adh" class="bline">{_T string="MSN:"}</label>
-                        <input type="text" name="msn_adh" id="msn_adh" value="{$member->msn}" maxlength="150" size="30" {$disabled.msn_adh}{if $required.msn_adh eq 1} required{/if}/>
+						<input type="text" name="msn_adh" id="msn_adh" value="{$member->msn}" maxlength="150" size="30"{if isset($disabled.msn_adh)} {$disabled.msn_adh}{/if}{if isset($required.msn_adh) and $required.msn_adh eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="msn_adh" value="{$member->msn}"/>
@@ -208,7 +210,7 @@
     {if $visibles.gpgid eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.gpgid eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="gpgid" class="bline">{_T string="Id GNUpg (GPG):"}</label>
-                        <input type="text" name="gpgid" id="gpgid" value="{$member->gnupgid}" maxlength="8" size="8" {$disabled.gpgid}{if $required.gpgid eq 1} required{/if}/>
+						<input type="text" name="gpgid" id="gpgid" value="{$member->gnupgid}" maxlength="8" size="8"{if isset($disabled.gpgid)} {$disabled.gpgid}{/if}{if isset($required.gpgid) and $required.gpgid eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="gpgid" value="{$member->gnupgid}"/>
@@ -216,7 +218,7 @@
     {if $visibles.fingerprint eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.fingerprint eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="fingerprint" class="bline">{_T string="fingerprint:"}</label>
-                        <input type="text" name="fingerprint" id="fingerprint" value="{$member->fingerprint}" maxlength="40" size="40" {$disabled.fingerprint}{if $required.fingerprint eq 1}required{/if}/>
+						<input type="text" name="fingerprint" id="fingerprint" value="{$member->fingerprint}" maxlength="40" size="40"{if isset($disabled.fingerprint)} {$disabled.fingerprint}{/if}{if isset($required.fingerprint) and $required.fingerprint eq 1}required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="fingerprint" value="{$member->fingerprint}"/>
@@ -231,7 +233,7 @@
                     <p>
                         <label for="bool_display_info" class="bline tooltip">{_T string="Be visible in the members list:"}</label>
                         <span class="tip">{_T string="If you check this box (and if you are up to date with your contributions), your full name, website adress ad other informations will be publically visilbe on the members list.<br/>If you've uploaded a photo, it will be displayed on the trombinoscope page.<br/>Note that administrators can disabled public pages, this setting will have no effect in that case."}</span>
-                        <input type="checkbox" name="bool_display_info" id="bool_display_info" value="1" {if $member->appearsInMembersList() eq 1}checked="checked"{/if} {$disabled.bool_display_info}{if $required.bool_display_info eq 1} required{/if}/>
+						<input type="checkbox" name="bool_display_info" id="bool_display_info" value="1"{if $member->appearsInMembersList() eq 1} checked="checked"{/if}{if isset($disabled.bool_display_info)} {$disabled.bool_display_info}{/if}{if isset($required.bool_display_info) and $required.bool_display_info eq 1} required{/if}/>
                     </p>
     {else}
                     <input type="hidden" name="bool_display_info" value="{if $member->appearsInMembersList() eq 1}1{else}0{/if}"/>
@@ -282,7 +284,7 @@
     {if $visibles.login_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.login_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="login_adh" class="bline">{_T string="Username:"}</label>
-                        <input type="text" name="login_adh" id="login_adh" value="{$member->login}" maxlength="20" {$disabled.login_adh}{if $required.login_adh eq 1} required{/if}/>
+						<input type="text" name="login_adh" id="login_adh" value="{$member->login}" maxlength="20"{if isset($disabled.login_adh)} {$disabled.login_adh}{/if}{if isset($required.login_adh) and $required.login_adh eq 1} required{/if}/>
                         {* FIXME: use parameter in prefs *}
                         <span class="exemple">{_T string="(at least %i characters)" pattern="/%i/" replace=2}</span>
                     </p>
@@ -293,12 +295,12 @@
         {if $visibles.mdp_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.mdp_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="mdp_adh" class="bline">{_T string="Password:"}</label>
-                        <input type="password" name="mdp_adh" id="mdp_adh" value="" maxlength="20" autocomplete="off" {$disabled.mdp_adh}{if $required.mdp_adh eq 1} required{/if}/>
+						<input type="password" name="mdp_adh" id="mdp_adh" value="" maxlength="20" autocomplete="off"{if isset($disabled.mdp_adh)} {$disabled.mdp_adh}{/if}{if isset($required.mdp_adh) and $required.mdp_adh eq 1} required{/if}/>
                         {* FIXME: use parameter in prefs *}
                         <span class="exemple">{_T string="(at least %i characters)" pattern="/%i/" replace=6}</span>
                     </p>
                     <p>
-                        <input class="labelalign" type="password" name="mdp_adh2" value="" maxlength="20" autocomplete="off" {$disabled.mdp_adh}{if $required.mdp_adh eq 1} required{/if}/>
+						<input class="labelalign" type="password" name="mdp_adh2" value="" maxlength="20" autocomplete="off"{if isset($disabled.mdp_adh)} {$disabled.mdp_adh}{/if}{if isset($required.mdp_adh) and $required.mdp_adh eq 1} required{/if}/>
                         <span class="exemple">{_T string="(Confirmation)"}</span>
                     </p>
         {/if}
@@ -307,7 +309,7 @@
                         <label for="mdp_adh" class="bline libelle">{_T string="Password:"}</label>
                         <input type="hidden" name="mdp_crypt" value="{$spam_pass}" />
                         <img src="{$spam_img}" alt="{_T string="Password image"}" />
-                        <input type="text" name="mdp_adh" id="mdp_adh" value="" maxlength="20" {$disabled.mdp_adh}{if $required.mdp_adh eq 1} required{/if}/>
+						<input type="text" name="mdp_adh" id="mdp_adh" value="" maxlength="20"{if isset($disabled.mdp_adh)} {$disabled.mdp_adh}{/if}{if isset($required.mdp_adh) and $required.mdp_adh eq 1} required{/if}/>
                         <span class="exemple">{_T string="Please repeat in the field the password shown in the image."}</span>
                     </p>
     {/if}
@@ -335,15 +337,14 @@
     {if $visibles.info_public_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.info_public_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="info_public_adh" class="bline">{_T string="Other informations:"}</label> 
-                        <textarea name="info_public_adh" id="info_public_adh" cols="61" rows="6" {$disabled.info_public_adh}{if $required.info_public_adh eq 1} required{/if}>{$member->others_infos|htmlspecialchars}</textarea>
+						<textarea name="info_public_adh" id="info_public_adh" cols="61" rows="6"{if isset($disabled.info_public_adh)} {$disabled.info_public_adh}{/if}{if isset($required.info_public_adh) and $required.info_public_adh eq 1} required{/if}>{$member->others_infos|htmlspecialchars}</textarea>
     {if $login->isAdmin() or $login->isStaff()}
                         <br/><span class="exemple labelalign">{_T string="This comment is reserved to the member."}</span>
     {/if}
                     </p>
-    {else}
+    {if isset($groups) and $groups|@count != 0}
                     <input type="hidden" name="info_public_adh" value="{$member->others_infos|htmlspecialchars}"/>
     {/if}
-    {if $groups|@count != 0}
                     <p>
                         <span class="bline">{_T string="Groups:"}</span>
         {if $login->isGroupManager()}
@@ -560,3 +561,4 @@
             });
         </script>
 {/if}
+{/block}

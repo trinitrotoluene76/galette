@@ -1,3 +1,5 @@
+{extends file="page.tpl"}
+{block name="content"}
 {if $navigate|@count != 0}
     <nav>
         <a id="prev" href="{if isset($navigate.prev)}?id_adh={$navigate.prev}{else}#{/if}" class="button{if !isset($navigate.prev)} selected{/if}">{_T string="Previous"}</a>
@@ -44,8 +46,9 @@ We have to use a template file, so Smarty will do its work (like replacing varia
                 <th>{_T string="Name:"}</th>
                 <td>{$member->spoliteness} {$member->name} {$member->surname}</td>
                 <td rowspan="{if $member->isCompany()}7{else}6{/if}" style="width:{$member->picture->getOptimalWidth()}px;">
+                    {assign var="mid" value=$member->id}
                     <img
-                        src="{$galette_base_path}picture.php?id_adh={$member->id}&amp;rand={$time}"
+                        src="{urlFor name="photo" options="id.$mid|rand.$time"}"
                         width="{$member->picture->getOptimalWidth()}"
                         height="{$member->picture->getOptimalHeight()}"
                         alt="{_T string="Picture"}"
@@ -87,7 +90,7 @@ We have to use a template file, so Smarty will do its work (like replacing varia
 {if $visibles.pref_lang eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.pref_lang eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
             <tr>
                 <th>{_T string="Language:"}</th>
-                <td><img src="{$pref_lang_img}" alt=""/> {$pref_lang}</td>
+				<td><img src="{$galette_base_path}{$pref_lang_img}" alt=""/> {$pref_lang}</td>
             </tr>
 {/if}
         </table>
@@ -268,10 +271,10 @@ We have to use a template file, so Smarty will do its work (like replacing varia
                     <a href="{if $login->isGroupManager($kgroup)}gestion_groupes.php?id_group={$kgroup}{else}#{/if}" class="button group-btn{if not $login->isGroupManager($kgroup)} notmanaged{/if}">
                         {$group}
             {if $member->isGroupMember($group)}
-                        <img src="{$template_subdir}images/icon-user.png" alt="{_T string="[member]"}" width="16" height="16"/>
+                        <img src="{$galette_base_path}{$template_subdir}images/icon-user.png" alt="{_T string="[member]"}" width="16" height="16"/>
             {/if}
             {if $member->isGroupManager($group)}
-                        <img src="{$template_subdir}images/icon-star.png" alt="{_T string="[manager]"}" width="16" height="16"/>
+                        <img src="{$galette_base_path}{$template_subdir}images/icon-star.png" alt="{_T string="[manager]"}" width="16" height="16"/>
             {/if}
                     </a>
         {/if}
@@ -306,3 +309,4 @@ We have to use a template file, so Smarty will do its work (like replacing varia
         });
     </script>
 {/if}
+{/block}

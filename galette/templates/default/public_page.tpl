@@ -4,7 +4,7 @@
         {include file='common_header.tpl'}
 {if $require_calendar}
         <script type="text/javascript" src="{$galette_base_path}{$jquery_dir}jquery.ui-{$jquery_ui_version}/jquery.ui.datepicker.min.js"></script>
-    {if $lang ne 'en'}
+    {if $galette_lang ne 'en'}
         <script type="text/javascript" src="{$galette_base_path}{$jquery_dir}jquery.ui-{$jquery_ui_version}/i18n/jquery.ui.datepicker-{$galette_lang}.js"></script>
     {/if}
 {/if}
@@ -50,7 +50,7 @@ We have to use a template file, so Smarty will do its work (like replacing varia
             <a id="backhome" class="button{if $PAGENAME eq "index.php"} selected{/if}" href="{$galette_base_path}index.php">{_T string="Home"}</a>
     {if !$login->isLogged()}
         {if $preferences->pref_bool_selfsubscribe eq true}
-            <a id="subscribe" class="button{if $PAGENAME eq "self_adherent.php"} selected{/if}" href="{$galette_base_path}self_adherent.php">{_T string="Subscribe"}</a>
+            <a id="subscribe" class="button{if $cur_path eq "/subscribe"} selected{/if}" href="{urlFor name="subscribe"}">{_T string="Subscribe"}</a>
         {/if}
         {if $pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_DISABLED')}
             <a id="lostpassword" class="button{if $PAGENAME eq "lostpasswd.php"} selected{/if}" href="{$galette_base_path}lostpasswd.php">{_T string="Lost your password?"}</a>
