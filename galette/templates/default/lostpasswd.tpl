@@ -1,4 +1,6 @@
-                <form action="lostpasswd.php" method="post" enctype="multipart/form-data">
+{extends file="public_page.tpl"}
+{block name="content"}
+                <form action="{urlFor name="retrieve-pass"}" method="post" enctype="multipart/form-data">
                 <section>
                     <p>
                         <label for="login" class="">{_T string="Username or email:"}</label>
@@ -8,3 +10,4 @@
                     <input type="hidden" name="valid" value="1"/>
                 </section>
                 </form>
+{/block}
