@@ -30,7 +30,7 @@
                         <select name="parent_group" id="parent_group">
                             <option value="">{_T string="None"}</option>
 {foreach item=g from=$groups}
-                            <option value="{$g->getId()}"{if $pgroup and $pgroup->getId() eq $g->getId()} selected="selected"{/if}>{$g->getName()}</option>
+                            <option value="{$g->getId()}"{if isset($pgroup) and $pgroup->getId() eq $g->getId()} selected="selected"{/if}>{$g->getName()}</option>
 {/foreach}
                         </select>
 {/if}

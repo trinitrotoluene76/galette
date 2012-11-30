@@ -1,3 +1,5 @@
+{extends file="page.tpl"}
+{block name="content"}
 <div class="panels">
     <aside id="groups_list">
         <header class="ui-state-default ui-state-active">
@@ -292,3 +294,4 @@
         }
     });
 </script>
+{/block}
