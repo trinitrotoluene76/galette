@@ -1,3 +1,5 @@
+{extends file="page.tpl"}
+{block name="content"}
         <form action="gestion_contributions.php" method="get" id="filtre">
         <div id="listfilter">
             <label for="start_date_filter">{_T string="Show contributions since"}</label>&nbsp;
@@ -17,7 +19,7 @@
             <input type="submit" class="inline" value="{_T string="Filter"}"/>
             <input type="submit" name="clear_filter" class="inline" value="{_T string="Clear filter"}"/>
         </div>
-{if $member}
+{if isset($member)}
         <div align="center">
             <p class="{$member->getRowClass()}">{$member->getDues()}</p>
         </div>
@@ -25,7 +27,7 @@
         <table class="infoline">
             <tr>
                 <td class="left nowrap">
-{if $member && $mode neq 'ajax'}
+{if isset($member) && $mode neq 'ajax'}
     {if $login->isAdmin() or $login->isStaff()}
                     <a id="clearfilter" href="?id_adh=all" title="{_T string="Show all members contributions"}">{_T string="Show all members contributions"}</a>
     {/if}
@@ -90,7 +92,7 @@
                         {/if}
                         </a>
                     </th>
-{if ($login->isAdmin() or $login->isStaff()) and !$member}
+{if ($login->isAdmin() or $login->isStaff()) and !isset($member)}
                     <th class="listing left">
                         <a href="gestion_contributions.php?tri={php}echo Galette\Repository\Contributions::ORDERBY_MEMBER;{/php}" class="listing">{_T string="Member"}
                         {if $contributions->orderby eq constant('Galette\Repository\Contributions::ORDERBY_MEMBER')}
@@ -154,7 +156,7 @@
             </thead>
             <tfoot>
                 <tr>
-                    <td class="right" colspan="{if ($login->isAdmin() or $login->isStaff()) && !$member}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}">
+                    <td class="right" colspan="{if ($login->isAdmin() or $login->isStaff()) && !isset($member)}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}">
                         {_T string="Found contributions total %f" pattern="/%f/" replace=$contributions->sum}
                     </td>
                 </tr>
@@ -169,7 +171,7 @@
                 </tr>
 {/if}
                 <tr>
-                    <td colspan="{if ($login->isAdmin() or $login->isStaff()) && !$member}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}" class="center" id="table_footer">
+                    <td colspan="{if ($login->isAdmin() or $login->isStaff()) && !isset($member)}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}" class="center" id="table_footer">
                         {_T string="Pages:"}<br/>
                         <ul class="pages">{$pagination}</ul>
                     </td>
@@ -204,12 +206,12 @@
                     <td class="{$cclass} center nowrap">{$contribution->date}</td>
                     <td class="{$cclass} center nowrap">{$contribution->begin_date}</td>
                     <td class="{$cclass} center nowrap">{$contribution->end_date}</td>
-    {if ($login->isAdmin() or $login->isStaff()) && !$member}
+    {if ($login->isAdmin() or $login->isStaff()) && !isset($member)}
                     <td class="{$cclass}">
         {if $contribs->filtre_cotis_adh eq ""}
-                        <a href="gestion_contributions.php?id_adh={$mid}">{if $member}{$member->sname}{else}{memberName id="$mid"}{/if}</a>
+            <a href="gestion_contributions.php?id_adh={$mid}">{if isset($member)}{$member->sname}{else}{memberName id="$mid"}{/if}</a>
         {else}
-                        <a href="voir_adherent.php?id_adh={$mid}">{if $member}{$member->sname}{else}{memberName id="$mid"}{/if}</a>
+            <a href="voir_adherent.php?id_adh={$mid}">{if isset($member)}{$member->sname}{else}{memberName id="$mid"}{/if}</a>
         {/if}
                     </td>
     {/if}
@@ -229,7 +231,7 @@
     {/if}
                 </tr>
 {foreachelse}
-                <tr><td colspan="{if ($login->isAdmin() or $login->isStaff()) && !$member}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}" class="emptylist">{_T string="no contribution"}</td></tr>
+                <tr><td colspan="{if ($login->isAdmin() or $login->isStaff()) && !isset($member)}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}" class="emptylist">{_T string="no contribution"}</td></tr>
 {/foreach}
             </tbody>
         </table>
@@ -264,7 +266,7 @@
                     $('#nbshow').change(function() {
                         this.form.submit();
                     });
-                    $('#table_footer').parent().before('<td class="right" colspan="{if ($login->isAdmin() or $login->isStaff()) && !$member}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}"><a href="#" id="show_legend">{_T string="Show legend"}</a></td>');
+                    $('#table_footer').parent().before('<td class="right" colspan="{if ($login->isAdmin() or $login->isStaff()) && !isset($member)}10{elseif $login->isAdmin() or $login->isStaff()}9{else}8{/if}"><a href="#" id="show_legend">{_T string="Show legend"}</a></td>');
                     $('#legende h1').remove();
                     $('#legende').dialog({
                         autoOpen: false,
@@ -290,3 +292,4 @@
                 _init_contribs_page();
             });
         </script>
+{/block}
