@@ -278,8 +278,8 @@
                     </p>
             {else}
                 <input type="hidden" name="bool_exempt_adh" value="{if $member->isDueFree()}1{else}0{/if}"/>
+            {/if}
         {/if}
-    {/if}
     {/if}
     {if $visibles.login_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.login_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
@@ -332,19 +332,19 @@
                     </p>
         {else}
                     <input type="hidden" name="info_adh" value="{$member->others_infos_admin|htmlspecialchars}"/>
-    {/if}
+        {/if}
     {/if}
     {if $visibles.info_public_adh eq constant('Galette\Entity\FieldsConfig::VISIBLE') or ($visibles.info_public_adh eq constant('Galette\Entity\FieldsConfig::ADMIN') and ($login->isStaff() or $login->isAdmin() or $login->isSuperAdmin()))}
                     <p>
                         <label for="info_public_adh" class="bline">{_T string="Other informations:"}</label> 
 						<textarea name="info_public_adh" id="info_public_adh" cols="61" rows="6"{if isset($disabled.info_public_adh)} {$disabled.info_public_adh}{/if}{if isset($required.info_public_adh) and $required.info_public_adh eq 1} required{/if}>{$member->others_infos|htmlspecialchars}</textarea>
-    {if $login->isAdmin() or $login->isStaff()}
+        {if $login->isAdmin() or $login->isStaff()}
                         <br/><span class="exemple labelalign">{_T string="This comment is reserved to the member."}</span>
-    {/if}
+        {/if}
                     </p>
-    {if isset($groups) and $groups|@count != 0}
                     <input type="hidden" name="info_public_adh" value="{$member->others_infos|htmlspecialchars}"/>
     {/if}
+    {if isset($groups) and $groups|@count != 0}
                     <p>
                         <span class="bline">{_T string="Groups:"}</span>
         {if $login->isGroupManager()}
