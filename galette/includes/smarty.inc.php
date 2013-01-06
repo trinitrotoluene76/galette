@@ -135,7 +135,7 @@ function getStatusLabel($params)
     global $statuses_list;
     return $statuses_list[$id];
 }
-$tpl->registerPlugin(
+$smarty->registerPlugin(
     'function',
     'statusLabel',
     'getStatusLabel'
