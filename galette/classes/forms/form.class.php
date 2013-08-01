@@ -49,6 +49,9 @@ require_once 'checkbox_element.class.php';
 require_once 'date_element.class.php';
 require_once 'radio_element.class.php';
 
+use Galette\Entity\Adherent;
+use Galette\Entity\FieldsConfig;
+
 /**
  * Form element
  *
