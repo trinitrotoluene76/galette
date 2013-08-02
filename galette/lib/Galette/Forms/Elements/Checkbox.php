@@ -3,11 +3,11 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * Hidden form element
+ * Checkbox form element
  *
  * PHP version 5
  *
- * Copyright © 2012 The Galette Team
+ * Copyright © 2012-2013 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -28,29 +28,31 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-10
  */
 
+namespace Galette\Forms\Elements;
+
 /** @ignore */
-require_once 'Zend/Form/Element/Hidden.php';
+require_once 'Zend/Form/Element/Checkbox.php';
 
 /**
- * Hidden form element
+ * Checkbox form element
  *
  * @category  Forms
- * @name      GaletteHiddenElement
+ * @name      Checkbox
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-10
  */
-class GaletteHiddenElement extends Zend_Form_Element_Hidden
+class Checkbox extends \Zend_Form_Element_Checkbox
 {
     public function loadDefaultDecorators()
     {
@@ -59,11 +61,26 @@ class GaletteHiddenElement extends Zend_Form_Element_Hidden
         }
 
         $decorators = $this->getDecorators();
-        if ( empty($decorators) ) {
+        if (empty($decorators)) {
             $this->addDecorator('ViewHelper')
                 ->addDecorator(
-                    new Zend_Form_Decorator_FormElements(array('tag' => null))
+                    new \Zend_Form_Decorator_Label(
+                        array(
+                            'escape' => false,
+                            'placement'=>\Zend_Form_Decorator_Abstract::PREPEND
+                        )
+                    )
+                )
+                ->addDecorator(
+                    new \Zend_Form_Decorator_FormElements(array('tag' => null))
+                )->addDecorator(
+                    new \Zend_Form_Decorator_HtmlTag(
+                        array(
+                            'tag' => 'p'
+                        )
+                    )
                 );
+
         }
     }
 

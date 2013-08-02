@@ -3,11 +3,11 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * Date form element
+ * Hidden form element
  *
  * PHP version 5
  *
- * Copyright © 2012 The Galette Team
+ * Copyright © 2012-2013 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -28,45 +28,45 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-09
+ * @since     Available since 0.71dev - 2012-02-10
  */
+
+namespace Galette\Forms\Elements;
 
 /** @ignore */
+require_once 'Zend/Form/Element/Hidden.php';
 
 /**
- * Date form element
+ * Hidden form element
  *
  * @category  Forms
- * @name      GaletteTextElement
+ * @name      Hidden
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-09
+ * @since     Available since 0.71dev - 2012-02-10
  */
-class GaletteDateElement extends GaletteTextElement
+class Hidden extends \Zend_Form_Element_Hidden
 {
-    /**
-     * Constructor
-     *
-     * $spec may be:
-     * - string: name of element
-     * - array: options with which to configure element
-     * - Zend_Config: Zend_Config with options for configuring element
-     *
-     * @param string|array|Zend_Config $spec    Specs
-     * @param array|Zend_Config        $options Options
-     *
-     * @return void
-     */
-    public function __construct($spec, $options = null)
+    public function loadDefaultDecorators()
     {
-        parent::__construct($spec, $options);
-        $this->setAttrib('class', 'hasDatepicker');
+        if ($this->loadDefaultDecoratorsIsDisabled()) {
+            return;
+        }
+
+        $decorators = $this->getDecorators();
+        if ( empty($decorators) ) {
+            $this->addDecorator('ViewHelper')
+                ->addDecorator(
+                    new \Zend_Form_Decorator_FormElements(array('tag' => null))
+                );
+        }
     }
+
 }
