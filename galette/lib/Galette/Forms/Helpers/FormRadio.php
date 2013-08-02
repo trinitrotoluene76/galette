@@ -7,7 +7,7 @@
  *
  * PHP version 5
  *
- * Copyright © 2012 The Galette Team
+ * Copyright © 2012-2013 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -28,12 +28,14 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-11
  */
+
+namespace Galette\Forms\Helpers;
 
 /** @ignore */
 require_once 'Zend/View/Helper/FormRadio.php';
@@ -42,15 +44,15 @@ require_once 'Zend/View/Helper/FormRadio.php';
  * Radio element helper
  *
  * @category  Forms
- * @name      GaletteForm
+ * @name      FormRadio
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-11
  */
-class GaletteHelperFormRadio extends Zend_View_Helper_FormRadio
+class FormRadio extends \Zend_View_Helper_FormRadio
 {
     /**
      * Generates a set of radio button elements.
@@ -123,7 +125,7 @@ class GaletteHelperFormRadio extends Zend_View_Helper_FormRadio
 
         // XHTML or HTML end tag?
         $endTag = ' />';
-        if (($this->view instanceof Zend_View_Abstract)
+        if (($this->view instanceof \Zend_View_Abstract)
             && !$this->view->doctype()->isXhtml()
         ) {
             $endTag= '>';
@@ -134,7 +136,7 @@ class GaletteHelperFormRadio extends Zend_View_Helper_FormRadio
         $pattern = @preg_match('/\pL/u', 'a') 
             ? '/[^\p{L}\p{N}\-\_]/u'    // Unicode
             : '/[^a-zA-Z0-9\-\_]/';     // No Unicode
-        $filter = new Zend_Filter_PregReplace($pattern, "");
+        $filter = new \Zend_Filter_PregReplace($pattern, "");
 
         // add radio buttons to the list.
         foreach ($options as $opt_value => $opt_label) {

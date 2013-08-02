@@ -3,11 +3,11 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * Checkbox form element
+ * Radio form element
  *
  * PHP version 5
  *
- * Copyright © 2012 The Galette Team
+ * Copyright © 2012-2013 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -28,30 +28,40 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-10
+ * @since     Available since 0.71dev - 2012-02-11
  */
+
+namespace Galette\Forms\Elements;
 
 /** @ignore */
-require_once 'Zend/Form/Element/Checkbox.php';
+require_once 'Zend/Form/Element/Radio.php';
+require_once 'Zend/Form/Decorator/ViewHelper.php';
 
 /**
- * Checkbox form element
+ * Radio form element
  *
  * @category  Forms
- * @name      GaletteCheckboxElement
+ * @name      Radio
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-10
+ * @since     Available since 0.71dev - 2012-02-11
  */
-class GaletteCheckboxElement extends Zend_Form_Element_Checkbox
+class Radio extends \Zend_Form_Element_Radio
 {
+
+
+    /**
+     * Load default decorators
+     *
+     * @return void
+     */
     public function loadDefaultDecorators()
     {
         if ($this->loadDefaultDecoratorsIsDisabled()) {
@@ -60,26 +70,31 @@ class GaletteCheckboxElement extends Zend_Form_Element_Checkbox
 
         $decorators = $this->getDecorators();
         if (empty($decorators)) {
-            $this->addDecorator('ViewHelper')
-                ->addDecorator(
-                    new Zend_Form_Decorator_Label(
-                        array(
-                            'escape' => false,
-                            'placement'=>Zend_Form_Decorator_Abstract::PREPEND
-                        )
+            $this->addDecorator(
+                new \Zend_Form_Decorator_ViewHelper(
+                    array(
+                        'helper' => 'gformRadio'
                     )
                 )
-                ->addDecorator(
-                    new Zend_Form_Decorator_FormElements(array('tag' => null))
-                )->addDecorator(
-                    new Zend_Form_Decorator_HtmlTag(
-                        array(
-                            'tag' => 'p'
-                        )
+            )->addDecorator(
+                new \Zend_Form_Decorator_Label(
+                    array(
+                        'tag' => 'span',
+                        'escape' => false,
+                        'placement'=>\Zend_Form_Decorator_Abstract::PREPEND,
+                        'disableFor'=>true
                     )
-                );
+                )
+            )->addDecorator(
+                new \Zend_Form_Decorator_FormElements(array('tag' => null))
+            )->addDecorator(
+                new \Zend_Form_Decorator_HtmlTag(
+                    array(
+                        'tag' => 'p'
+                    )
+                )
+            );
 
         }
     }
-
 }

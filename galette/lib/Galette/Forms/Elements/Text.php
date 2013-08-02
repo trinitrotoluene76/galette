@@ -3,11 +3,11 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * Radio form element
+ * Text form element
  *
  * PHP version 5
  *
- * Copyright © 2012 The Galette Team
+ * Copyright © 2012-2013 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -28,74 +28,79 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-11
+ * @since     Available since 0.71dev - 2012-02-09
  */
+
+namespace Galette\Forms\Elements;
 
 /** @ignore */
-require_once 'Zend/Form/Element/Radio.php';
-require_once 'Zend/Form/Decorator/ViewHelper.php';
-require_once 'form_radio_helper.class.php';
+require_once 'Zend/Form/Element/Text.php';
 
 /**
- * Radio form element
+ * Text form element
  *
  * @category  Forms
- * @name      GaletteRadioElement
+ * @name      Text
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-11
+ * @since     Available since 0.71dev - 2012-02-09
  */
-class GaletteRadioElement extends Zend_Form_Element_Radio
+class Text extends \Zend_Form_Element_Text
 {
 
+    /**
+     * Set eleemnt as required. That version adds HTML5 required attribute
+     *
+     * @param boolean $flag flag
+     *
+     * @return see Zend_Form_Element_Text::setRequired
+     */
+    public function setRequired($flag = true)
+    {
+        /** set HTML5 required attribute */
+        if ( $flag === true ) {
+            $this->setAttrib('required', 'required');
+        }
+        return parent::setRequired($flag);
+    }
 
     /**
-     * Load default decorators
+     * Loads default decorators. Change display according to
+     * Galette's theming conventions.
      *
      * @return void
      */
     public function loadDefaultDecorators()
     {
-        if ($this->loadDefaultDecoratorsIsDisabled()) {
+        if ( $this->loadDefaultDecoratorsIsDisabled() ) {
             return;
         }
 
         $decorators = $this->getDecorators();
         if (empty($decorators)) {
-            $this->addDecorator(
-                    new Zend_Form_Decorator_ViewHelper(
-                        array(
-                            'helper' => 'gformRadio'
-                        )
-                    )
-                )
+            $this->addDecorator('ViewHelper')
                 ->addDecorator(
-                    new Zend_Form_Decorator_Label(
+                    new \Zend_Form_Decorator_Label(
                         array(
-                            'tag' => 'span',
                             'escape' => false,
-                            'placement'=>Zend_Form_Decorator_Abstract::PREPEND,
-                            'disableFor'=>true
+                            'class' => 'galette_form_label'
                         )
                     )
-                )
-                ->addDecorator(
-                    new Zend_Form_Decorator_FormElements(array('tag' => null))
                 )->addDecorator(
-                    new Zend_Form_Decorator_HtmlTag(
+                    new \Zend_Form_Decorator_HtmlTag(
                         array(
-                            'tag' => 'p'
+                            'tag' => 'p',
+                            'class' => 'galette_form_line'
                         )
                     )
                 );
-
         }
     }
 }

@@ -7,7 +7,7 @@
  *
  * PHP version 5
  *
- * Copyright © 2012 The Galette Team
+ * Copyright © 2012-2013 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -28,12 +28,14 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2012-2013 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-09
  */
+
+namespace Galette\Forms;
 
 /** @ignore */
 require_once 'Zend/View.php';
@@ -43,21 +45,17 @@ require_once 'Zend/Form/Decorator/HtmlTag.php';
 require_once 'Zend/Form/Decorator/Label.php';
 require_once 'Zend/Form/Decorator/FormElements.php';
 require_once 'Zend/Validate/EmailAddress.php';
-require_once 'text_element.class.php';
-require_once 'hidden_element.class.php';
-require_once 'checkbox_element.class.php';
-require_once 'date_element.class.php';
-require_once 'radio_element.class.php';
 
 use Galette\Entity\Adherent;
 use Galette\Entity\FieldsConfig;
 use Galette\Repository\Titles;
+use Galette\Forms\Helpers\FormRadio;
 
 /**
  * Form element
  *
  * @category  Forms
- * @name      GaletteForm
+ * @name      Form
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
  * @copyright 2012 The Galette Team
@@ -65,7 +63,7 @@ use Galette\Repository\Titles;
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-09
  */
-class GaletteForm extends Zend_Form
+class Form extends \Zend_Form
 {
     private $_table;
     private $_zdb;
@@ -87,10 +85,10 @@ class GaletteForm extends Zend_Form
         $this->_table = $table;
         parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
-        $view = new Zend_View();
+        $view = new \Zend_View();
         $this->setView($view);
         $this->setMethod('post');
-        $helper = new GaletteHelperFormRadio();
+        $helper = new FormRadio();
         $view->registerHelper($helper, 'gformRadio');
         $this->_loadElements();
     }
@@ -108,27 +106,27 @@ class GaletteForm extends Zend_Form
         $categories = $fc->getCategorizedFields();
 
         foreach ( $elements as $elt ) {
-            $zf = new Zend_Form_SubForm();
+            $zf = new \Zend_Form_SubForm();
 
             $zf->setLegend($elt->label);
             $elements = array();
             foreach ( $elt->elements as $field ) {
                 switch ( $field->type ) {
                 case FieldsConfig::TYPE_HIDDEN:
-                    $class = 'GaletteHiddenElement';
+                    $class = 'Galette\Forms\Elements\Hidden';
                     break;
                 case FieldsConfig::TYPE_BOOL:
-                    $class = 'GaletteCheckboxElement';
+                    $class = 'Galette\Forms\Elements\Checkbox';
                     break;
                 case FieldsConfig::TYPE_DATE:
-                    $class = 'GaletteDateElement';
+                    $class = 'Galette\Forms\Elements\Date';
                     break;
                 case FieldsConfig::TYPE_RADIO:
-                    $class = 'GaletteRadioElement';
+                    $class = 'Galette\Forms\Elements\Radio';
                     break;
                 default:
                 case FieldsConfig::TYPE_STR:
-                    $class = 'GaletteTextElement';
+                    $class = 'Galette\Forms\Elements\Text';
                 }
                 $element =  new $class($field->field_id);
 

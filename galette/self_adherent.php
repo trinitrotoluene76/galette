@@ -44,6 +44,7 @@ use Galette\Entity\FieldsConfig;
 use Galette\Entity\Texts;
 use Galette\Repository\Titles;
 use Galette\Core\PasswordImage;
+use Galette\Forms\Form;
 
 /** @ignore */
 require_once 'includes/galette.inc.php';
@@ -268,9 +269,7 @@ if ( isset($head_redirect) ) {
 }
 // /self_adh specific
 
-require_once WEB_ROOT . 'classes/forms/form.class.php';
-
-$gform = new GaletteForm($zdb, Adherent::TABLE);
+$gform = new Form($zdb, Adherent::TABLE);
 
 $tpl->assign('zform', $gform);
 
