@@ -1782,8 +1782,8 @@ legend {
 }
 
 /* no border on the first 'p' child */
-.cssform p:nth-child(2), #addfield p:first-child, .cssform legend+p/*, .cssform div.p:nth-child(2), .cssform div p:nth-child(1)*/{
-.galette_form p:nth-child(2)  {
+.cssform p:nth-child(2), #addfield p:first-child, .cssform legend+p/*, .cssform div.p:nth-child(2), .cssform div p:nth-child(1)*/
+.galette_form p:nth-child(2), .galette_form+p {
     border-top:none;
 }
 /* If there is a div, the preceding rules does not apply to the correct element :( */
