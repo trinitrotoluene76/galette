@@ -51,6 +51,7 @@ require_once 'radio_element.class.php';
 
 use Galette\Entity\Adherent;
 use Galette\Entity\FieldsConfig;
+use Galette\Repository\Titles;
 
 /**
  * Form element
@@ -67,19 +68,22 @@ use Galette\Entity\FieldsConfig;
 class GaletteForm extends Zend_Form
 {
     private $_table;
+    private $_zdb;
 
     /**
      * Constructor
      *
      * Registers form view helper as decorator
      *
+     * @param Db     $zdb     Database instance
      * @param string $table   Table name
      * @param mixed  $options Options
      *
      * @return void
      */
-    public function __construct($table, $options = null)
+    public function __construct($zdb, $table, $options = null)
     {
+        $this->_zdb = $zdb;
         $this->_table = $table;
         parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
@@ -127,9 +131,9 @@ class GaletteForm extends Zend_Form
                     $class = 'GaletteTextElement';
                 }
                 $element =  new $class($field->field_id);
-                
+
                 if ( $field->field_id == 'titre_adh' ) {
-                    $element->setMultiOptions(Politeness::getList());
+                    $element->setMultiOptions(Titles::getList($this->_zdb));
                 }
 
                 if ( $field->required == 1 ) {
@@ -178,7 +182,7 @@ class GaletteForm extends Zend_Form
             
         }
     }
-    
+
     /**
      * Loads default decorators. Change display according to
      * Galette's theming conventions.

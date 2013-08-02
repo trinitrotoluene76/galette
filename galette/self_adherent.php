@@ -270,7 +270,7 @@ if ( isset($head_redirect) ) {
 
 require_once WEB_ROOT . 'classes/forms/form.class.php';
 
-$gform = new GaletteForm(Adherent::TABLE);
+$gform = new GaletteForm($zdb, Adherent::TABLE);
 
 $tpl->assign('zform', $gform);
 
