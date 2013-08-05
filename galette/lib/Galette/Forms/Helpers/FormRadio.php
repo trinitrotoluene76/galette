@@ -132,7 +132,7 @@ class FormRadio extends \Zend_View_Helper_FormRadio
         }
 
         // Set up the filter - Alnum + hyphen + underscore
-        require_once 'Zend/Filter/PregReplace.php';
+        include_once 'Zend/Filter/PregReplace.php';
         $pattern = @preg_match('/\pL/u', 'a') 
             ? '/[^\p{L}\p{N}\-\_]/u'    // Unicode
             : '/[^a-zA-Z0-9\-\_]/';     // No Unicode

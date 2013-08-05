@@ -70,6 +70,7 @@ class FieldsConfig
     const TYPE_EMAIL = 8;
     const TYPE_URL = 9;
     const TYPE_RADIO = 10;
+    const TYPE_SELECT = 11;
 
     private $_all_required;
     private $_all_visibles;
@@ -364,7 +365,12 @@ class FieldsConfig
                                 $o->type = self::TYPE_DATE;
                             } else if (preg_match('/bool/', $o->field_id) ) {
                                 $o->type = self::TYPE_BOOL;
-                            } else if ( $o->field_id == 'titre_adh' ) {
+                            } else if ( $o->field_id == 'titre_adh'
+                                || $o->field_id == 'pref_lang'
+                                || $o->field_id == 'id_statut'
+                            ) {
+                                $o->type = self::TYPE_SELECT;
+                            } else if ( $o->field_id == 'sexe_adh' ) {
                                 $o->type = self::TYPE_RADIO;
                             } else {
                                 $o->type = self::TYPE_STR;
