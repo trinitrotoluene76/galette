@@ -269,7 +269,7 @@ if ( isset($head_redirect) ) {
 }
 // /self_adh specific
 
-$gform = new Form($zdb, Adherent::TABLE);
+$gform = new Form($zdb, $i18n, Adherent::TABLE);
 
 $tpl->assign('zform', $gform);
 

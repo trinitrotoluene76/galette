@@ -48,8 +48,10 @@ require_once 'Zend/Validate/EmailAddress.php';
 
 use Galette\Entity\Adherent;
 use Galette\Entity\FieldsConfig;
+use Galette\Entity\Status;
 use Galette\Repository\Titles;
 use Galette\Forms\Helpers\FormRadio;
+use Galette\Forms\Helpers\FormSelect;
 
 /**
  * Form element
@@ -67,6 +69,7 @@ class Form extends \Zend_Form
 {
     private $_table;
     private $_zdb;
+    private $_i18n;
 
     /**
      * Constructor
@@ -74,14 +77,16 @@ class Form extends \Zend_Form
      * Registers form view helper as decorator
      *
      * @param Db     $zdb     Database instance
+     * @param I18n   $i18n    I18n instance
      * @param string $table   Table name
      * @param mixed  $options Options
      *
      * @return void
      */
-    public function __construct($zdb, $table, $options = null)
+    public function __construct($zdb, $i18n, $table, $options = null)
     {
         $this->_zdb = $zdb;
+        $this->_i18n = $i18n;
         $this->_table = $table;
         parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
@@ -90,6 +95,8 @@ class Form extends \Zend_Form
         $this->setMethod('post');
         $helper = new FormRadio();
         $view->registerHelper($helper, 'gformRadio');
+        $helper = new FormSelect();
+        $view->registerHelper($helper, 'gformSelect');
         $this->_loadElements();
     }
 
@@ -124,6 +131,9 @@ class Form extends \Zend_Form
                 case FieldsConfig::TYPE_RADIO:
                     $class = 'Galette\Forms\Elements\Radio';
                     break;
+                case FieldsConfig::TYPE_SELECT:
+                    $class = 'Galette\Forms\Elements\Select';
+                    break;
                 default:
                 case FieldsConfig::TYPE_STR:
                     $class = 'Galette\Forms\Elements\Text';
@@ -131,7 +141,30 @@ class Form extends \Zend_Form
                 $element =  new $class($field->field_id);
 
                 if ( $field->field_id == 'titre_adh' ) {
-                    $element->setMultiOptions(Titles::getList($this->_zdb));
+                    $element->setMultiOptions(Titles::getArrayList($this->_zdb));
+                }
+
+                if ( $field->field_id == 'sexe_adh' ) {
+                    $element->setMultiOptions(
+                        array(
+                            Adherent::NC    => _T("Unspecified"),
+                            Adherent::MAN   => _T("Man"),
+                            Adherent::WOMAN => _T("Woman")
+                        )
+                    );
+                }
+
+                if ( $field->field_id == 'pref_lang' ) {
+                    $element->setMultiOptions(
+                        $this->_i18n->getArrayList()
+                    );
+                }
+
+                if ( $field->field_id == 'id_statut' ) {
+                    $status = new Status();
+                    $element->setMultiOptions(
+                        $status->getList()
+                    );
                 }
 
                 if ( $field->required == 1 ) {
