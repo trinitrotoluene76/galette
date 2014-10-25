@@ -50,6 +50,9 @@ if ( !defined('GALETTE_PASSWORD_COMPAT_PATH') ) {
 if ( !defined('GALETTE_ZEND_PATH') ) {
     define('GALETTE_ZEND_PATH', GALETTE_ROOT . 'includes/Zend-' . ZEND_VERSION);
 }
+if ( !defined('GALETTE_AURA_PATH') ) {
+    define('GALETTE_AURA_PATH', GALETTE_ROOT . 'includes/auraphp');
+}
 if ( !defined('GALETTE_ANALOG_PATH') ) {
     define(
         'GALETTE_ANALOG_PATH',

@@ -45,6 +45,7 @@ use Galette\Entity\Texts;
 use Galette\Repository\Titles;
 use Galette\Core\PasswordImage;
 use Galette\Forms\Form;
+use Galette\Forms\FormRenderer;
 
 /** @ignore */
 require_once 'includes/galette.inc.php';
@@ -269,9 +270,9 @@ if ( isset($head_redirect) ) {
 }
 // /self_adh specific
 
-$gform = new Form($zdb, $i18n, Adherent::TABLE);
-
-$tpl->assign('zform', $gform);
+$form = new Form($zdb, $i18n, Adherent::TABLE);
+$form_renderer = new FormRenderer($form);
+$tpl->assign('form', $form_renderer);
 
 // display page
 $content = $tpl->fetch('member.tpl');

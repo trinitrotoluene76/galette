@@ -44,8 +44,11 @@ use Galette\Repository\Titles;
 use Galette\Forms\Helpers\FormRadio;
 use Galette\Forms\Helpers\FormSelect;
 
-use Zend\Form\Form as ZForm;
-use Zend\Form\Fieldset;
+use Aura\Input\Form as AForm;
+use Aura\Input\Builder;
+use Aura\Input\Filter;
+//use Zend\Form\Form as ZForm;
+//use Zend\Form\Fieldset;
 
 /**
  * Form element
@@ -54,12 +57,12 @@ use Zend\Form\Fieldset;
  * @name      Form
  * @package   Galette
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012 The Galette Team
+ * @copyright 2014 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-09
+ * @since     Available since 0.8.2dev - 2014-10-25
  */
-class Form extends ZForm
+class Form extends AForm
 {
     private $_table;
     private $_zdb;
@@ -83,10 +86,12 @@ class Form extends ZForm
         $this->_i18n = $i18n;
         $this->_table = $table;
 
-        parent::__construct('');
+        parent::__construct(new Builder, new Filter);
+
+        /*parent::__construct('');
 
         $this->setAttribute('method', 'post');
-        $this->setAttribute('id', $this->_table . '_form');
+        $this->setAttribute('id', $this->_table . '_form');*/
 
         /*parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
@@ -96,7 +101,7 @@ class Form extends ZForm
         $view->registerHelper($helper, 'gformRadio');
         $helper = new FormSelect();
         $view->registerHelper($helper, 'gformSelect');*/
-        $this->_loadElements();
+        /*$this->_loadElements();*/
     }
 
     /**
@@ -104,7 +109,7 @@ class Form extends ZForm
      *
      * @return void
      */
-    private function _loadElements()
+    public function init()
     {
         $a = new Adherent();
         $fc = new FieldsConfig(Adherent::TABLE, $a->fields);
@@ -115,7 +120,7 @@ class Form extends ZForm
             /*$fieldset = new Fieldset($elt->label);
             $this->add($fieldset);*/
 
-            $this->add(
+            /*$this->add(
                 array(
                     'name'      => $elt->label,
                     'type'      => 'Zend\Form\Fieldset',
@@ -123,15 +128,16 @@ class Form extends ZForm
                         'use_as_base_fieldset' => true
                     )
                 )
-            );
+            );*/
 
             /*$zf = new ZForm();*/
             /*$zf = new \Zend_Form_SubForm();
 
             $zf->setLegend($elt->label);
-            $elements = array();
+            $elements = array();*/
             foreach ( $elt->elements as $field ) {
-                switch ( $field->type ) {
+                $this->setField($field->label);
+                /*switch ( $field->type ) {
                 case FieldsConfig::TYPE_HIDDEN:
                     $class = 'Galette\Forms\Elements\Hidden';
                     break;
@@ -185,9 +191,9 @@ class Form extends ZForm
                 }
                 $element->setLabel($field->label);
                 $this->_validators($element, $field);
-                $elements[] = $element;
+                $elements[] = $element;*/
             }
-            $zf->addElements($elements);
+            /*$zf->addElements($elements);
 
             $zf->getDecorator('HtmlTag')->setOption('tag', 'div');
             $zf->getDecorator('Fieldset')->setOption('class', 'galette_form');
@@ -249,14 +255,4 @@ class Form extends ZForm
         );
     }*/
 
-    /**
-     * Assures form rendering
-     *
-     * @return string
-     */
-    public function render()
-    {
-        $fhelper = new \Zend\Form\View\Helper\Form();
-        return $fhelper->render($this);
-    }
 }
