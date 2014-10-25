@@ -28,23 +28,14 @@
  * @package   Galette
  *
  * @author    Johan Cwiklinski <johan@x-tnd.be>
- * @copyright 2012-2013 The Galette Team
+ * @copyright 2014 The Galette Team
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GPL License 3.0 or (at your option) any later version
  * @version   SVN: $Id$
  * @link      http://galette.tuxfamily.org
- * @since     Available since 0.71dev - 2012-02-09
+ * @since     Available since 0.8.2dev - 2014-10-25
  */
 
 namespace Galette\Forms;
-
-/** @ignore */
-require_once 'Zend/View.php';
-require_once 'Zend/Form.php';
-require_once 'Zend/Form/SubForm.php';
-require_once 'Zend/Form/Decorator/HtmlTag.php';
-require_once 'Zend/Form/Decorator/Label.php';
-require_once 'Zend/Form/Decorator/FormElements.php';
-require_once 'Zend/Validate/EmailAddress.php';
 
 use Galette\Entity\Adherent;
 use Galette\Entity\FieldsConfig;
@@ -52,6 +43,9 @@ use Galette\Entity\Status;
 use Galette\Repository\Titles;
 use Galette\Forms\Helpers\FormRadio;
 use Galette\Forms\Helpers\FormSelect;
+
+use Zend\Form\Form as ZForm;
+use Zend\Form\Fieldset;
 
 /**
  * Form element
@@ -65,7 +59,7 @@ use Galette\Forms\Helpers\FormSelect;
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.71dev - 2012-02-09
  */
-class Form extends \Zend_Form
+class Form extends ZForm
 {
     private $_table;
     private $_zdb;
@@ -88,15 +82,20 @@ class Form extends \Zend_Form
         $this->_zdb = $zdb;
         $this->_i18n = $i18n;
         $this->_table = $table;
-        parent::__construct($options);
+
+        parent::__construct('');
+
+        $this->setAttribute('method', 'post');
+        $this->setAttribute('id', $this->_table . '_form');
+
+        /*parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
         $view = new \Zend_View();
         $this->setView($view);
-        $this->setMethod('post');
         $helper = new FormRadio();
         $view->registerHelper($helper, 'gformRadio');
         $helper = new FormSelect();
-        $view->registerHelper($helper, 'gformSelect');
+        $view->registerHelper($helper, 'gformSelect');*/
         $this->_loadElements();
     }
 
@@ -113,7 +112,21 @@ class Form extends \Zend_Form
         $categories = $fc->getCategorizedFields();
 
         foreach ( $elements as $elt ) {
-            $zf = new \Zend_Form_SubForm();
+            /*$fieldset = new Fieldset($elt->label);
+            $this->add($fieldset);*/
+
+            $this->add(
+                array(
+                    'name'      => $elt->label,
+                    'type'      => 'Zend\Form\Fieldset',
+                    'options'   => array(
+                        'use_as_base_fieldset' => true
+                    )
+                )
+            );
+
+            /*$zf = new ZForm();*/
+            /*$zf = new \Zend_Form_SubForm();
 
             $zf->setLegend($elt->label);
             $elements = array();
@@ -180,7 +193,7 @@ class Form extends \Zend_Form
             $zf->getDecorator('Fieldset')->setOption('class', 'galette_form');
             $zf->removeDecorator('DtDdWrapper');
 
-            $this->addSubForm($zf, 'subform_' . rand(0, 50));
+            $this->addSubForm($zf, 'subform_' . rand(0, 50));*/
         }
     }
 
@@ -192,7 +205,7 @@ class Form extends \Zend_Form
      *
      * @return void
      */
-    private function _validators($element, $field)
+    /*private function _validators($element, $field)
     {
         if ( $field->max_length != ''
             && ($field->type == FieldsConfig::TYPE_STR
@@ -212,7 +225,7 @@ class Form extends \Zend_Form
         if ( $field->type == FieldsConfig::TYPE_EMAIL ) {
             
         }
-    }
+    }*/
 
     /**
      * Loads default decorators. Change display according to
@@ -220,7 +233,7 @@ class Form extends \Zend_Form
      *
      * @return void
      */
-    public function loadDefaultDecorators()
+    /*public function loadDefaultDecorators()
     {
         $this->setDecorators(
             array(
@@ -234,5 +247,16 @@ class Form extends \Zend_Form
                 'Form',
             )
         );
+    }*/
+
+    /**
+     * Assures form rendering
+     *
+     * @return string
+     */
+    public function render()
+    {
+        $fhelper = new \Zend\Form\View\Helper\Form();
+        return $fhelper->render($this);
     }
 }
