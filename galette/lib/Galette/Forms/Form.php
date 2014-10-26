@@ -67,6 +67,7 @@ class Form extends AForm
     private $_table;
     private $_zdb;
     private $_i18n;
+    private $_labels = array();
 
     /**
      * Constructor
@@ -136,35 +137,49 @@ class Form extends AForm
             $zf->setLegend($elt->label);
             $elements = array();*/
             foreach ( $elt->elements as $field ) {
-                $this->setField($field->label);
-                /*switch ( $field->type ) {
+                $type = null;
+                switch ( $field->type ) {
                 case FieldsConfig::TYPE_HIDDEN:
-                    $class = 'Galette\Forms\Elements\Hidden';
+                    $type = 'hidden';
                     break;
                 case FieldsConfig::TYPE_BOOL:
-                    $class = 'Galette\Forms\Elements\Checkbox';
+                    $type = 'checkbox';
                     break;
                 case FieldsConfig::TYPE_DATE:
-                    $class = 'Galette\Forms\Elements\Date';
+                    $type = 'date';
                     break;
                 case FieldsConfig::TYPE_RADIO:
-                    $class = 'Galette\Forms\Elements\Radio';
+                    $type = 'radio';
                     break;
                 case FieldsConfig::TYPE_SELECT:
-                    $class = 'Galette\Forms\Elements\Select';
+                    $type = 'select';
                     break;
                 default:
                 case FieldsConfig::TYPE_STR:
-                    $class = 'Galette\Forms\Elements\Text';
+                    $type = 'text';
                 }
-                $element =  new $class($field->field_id);
+
+                $attributes = [
+                    'id'    => $field->field_id,
+                    'name'  => $field->field_id
+                ];
+                if ( $field->required == 1 ) {
+                    $attributes['required'] = 'required';
+                }
+
+                $element = $this->setField($field->field_id, $type)
+                    ->setAttribs($attributes);
+
+                if ( $field->visible ) {
+                    $this->_labels[$field->field_id] = $field->label;
+                }
 
                 if ( $field->field_id == 'titre_adh' ) {
-                    $element->setMultiOptions(Titles::getArrayList($this->_zdb));
+                    $element->setOptions(Titles::getArrayList($this->_zdb));
                 }
 
                 if ( $field->field_id == 'sexe_adh' ) {
-                    $element->setMultiOptions(
+                    $element->setOptions(
                         array(
                             Adherent::NC    => _T("Unspecified"),
                             Adherent::MAN   => _T("Man"),
@@ -174,22 +189,19 @@ class Form extends AForm
                 }
 
                 if ( $field->field_id == 'pref_lang' ) {
-                    $element->setMultiOptions(
+                    $element->setOptions(
                         $this->_i18n->getArrayList()
                     );
                 }
 
                 if ( $field->field_id == 'id_statut' ) {
                     $status = new Status();
-                    $element->setMultiOptions(
+                    $element->setOptions(
                         $status->getList()
                     );
                 }
 
-                if ( $field->required == 1 ) {
-                    $element->setRequired(true);
-                }
-                $element->setLabel($field->label);
+                /*$element->setLabel($field->label);
                 $this->_validators($element, $field);
                 $elements[] = $element;*/
             }
@@ -201,6 +213,18 @@ class Form extends AForm
 
             $this->addSubForm($zf, 'subform_' . rand(0, 50));*/
         }
+    }
+
+    /**
+     * Get label for Field
+     *
+     * @param string $name Field name
+     *
+     * @return string
+     */
+    public function getLabel($name)
+    {
+        return $this->_labels[$name];
     }
 
     /**

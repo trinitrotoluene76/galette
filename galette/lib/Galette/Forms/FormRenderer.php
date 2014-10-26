@@ -84,6 +84,22 @@ class FormRenderer
 
         foreach ( $this->_form->getInputNames() as $name ) {
             $input = $this->_form->get($name);
+            $label = $this->_form->getLabel($name);
+
+            $html .= $helper->tag('p');
+
+            if ( $label !== null ) {
+                if ( $input['type'] === 'radio' ) {
+                    $html .= $helper->tag('span');
+                    $html .= $label;
+                    $html .= $helper->tag('/span');
+                } else {
+                    $html .= $helper->label(
+                        $label,
+                        ['for' => $name]
+                    );
+                }
+            }
 
             $html .= $helper->input(
                 array(
@@ -94,6 +110,8 @@ class FormRenderer
                     'options' => $input['options']
                 )
             );
+
+            $html .= $helper->tag('/p');
         }
 
         $html .= $helper->tag('/form');
