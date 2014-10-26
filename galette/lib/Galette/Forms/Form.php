@@ -45,6 +45,7 @@ use Galette\Forms\Helpers\FormRadio;
 use Galette\Forms\Helpers\FormSelect;
 
 use Aura\Input\Form as AForm;
+use Aura\Input\Fieldset;
 use Aura\Input\Builder;
 use Aura\Input\Filter;
 //use Zend\Form\Form as ZForm;
@@ -118,25 +119,94 @@ class Form extends AForm
         $categories = $fc->getCategorizedFields();
 
         foreach ( $elements as $elt ) {
+
+            $map['galette_fieldset'] = function () use ($elt) {
+                $fieldset = new Fieldset(
+                    new Builder(),
+                    new Filter()
+                );
+
+                foreach ( $elt->elements as $field ) {
+                    $type = null;
+                    switch ( $field->type ) {
+                    case FieldsConfig::TYPE_HIDDEN:
+                        $type = 'hidden';
+                        break;
+                    case FieldsConfig::TYPE_BOOL:
+                        $type = 'checkbox';
+                        break;
+                    case FieldsConfig::TYPE_DATE:
+                        $type = 'date';
+                        break;
+                    case FieldsConfig::TYPE_RADIO:
+                        $type = 'radio';
+                        break;
+                    case FieldsConfig::TYPE_SELECT:
+                        $type = 'select';
+                        break;
+                    default:
+                    case FieldsConfig::TYPE_STR:
+                        $type = 'text';
+                    }
+
+                    $attributes = [
+                        'id'    => $field->field_id,
+                        'name'  => $field->field_id
+                    ];
+                    if ( $field->required == 1 ) {
+                        $attributes['required'] = 'required';
+                    }
+
+                    $element = $fieldset->setField($field->field_id, $type)
+                        ->setAttribs($attributes);
+
+                    if ( $field->visible ) {
+                        $this->_labels[$field->field_id] = $field->label;
+                    }
+
+                    if ( $field->field_id == 'titre_adh' ) {
+                        $element->setOptions(Titles::getArrayList($this->_zdb));
+                    }
+
+                    if ( $field->field_id == 'sexe_adh' ) {
+                        $element->setOptions(
+                            array(
+                                Adherent::NC    => _T("Unspecified"),
+                                Adherent::MAN   => _T("Man"),
+                                Adherent::WOMAN => _T("Woman")
+                            )
+                        );
+                    }
+
+                    if ( $field->field_id == 'pref_lang' ) {
+                        $element->setOptions(
+                            $this->_i18n->getArrayList()
+                        );
+                    }
+
+                    if ( $field->field_id == 'id_statut' ) {
+                        $status = new Status();
+                        $element->setOptions(
+                            $status->getList()
+                        );
+                    }
+                }
+
+                return $fieldset;
+            };
+
+            $fieldset = new Fieldset(
+                new Builder($map),
+                new Filter()
+            );
+            $fieldset->setFieldset('galette_fieldset');
+            $this->inputs[$elt->label] = $fieldset;
+
+
             /*$fieldset = new Fieldset($elt->label);
             $this->add($fieldset);*/
 
-            /*$this->add(
-                array(
-                    'name'      => $elt->label,
-                    'type'      => 'Zend\Form\Fieldset',
-                    'options'   => array(
-                        'use_as_base_fieldset' => true
-                    )
-                )
-            );*/
-
-            /*$zf = new ZForm();*/
-            /*$zf = new \Zend_Form_SubForm();
-
-            $zf->setLegend($elt->label);
-            $elements = array();*/
-            foreach ( $elt->elements as $field ) {
+            /*foreach ( $elt->elements as $field ) {
                 $type = null;
                 switch ( $field->type ) {
                 case FieldsConfig::TYPE_HIDDEN:
@@ -199,12 +269,12 @@ class Form extends AForm
                     $element->setOptions(
                         $status->getList()
                     );
-                }
+                }*/
 
                 /*$element->setLabel($field->label);
                 $this->_validators($element, $field);
                 $elements[] = $element;*/
-            }
+            /*}*/
             /*$zf->addElements($elements);
 
             $zf->getDecorator('HtmlTag')->setOption('tag', 'div');
@@ -224,7 +294,9 @@ class Form extends AForm
      */
     public function getLabel($name)
     {
-        return $this->_labels[$name];
+        if ( in_array($name, array_keys($this->_labels)) ) {
+            return $this->_labels[$name];
+        }
     }
 
     /**

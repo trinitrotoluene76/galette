@@ -1816,7 +1816,8 @@ legend {
     font-weight: normal;
 }
 
-.bline{
+.bline,
+.galette_form label {
     font-weight: bold;
     background-color: #DDDDFF;
     padding:0.1em 0.3em;
@@ -1833,16 +1834,6 @@ th.bline, td.bline{
     margin-bottom:0;
     display:block;
     text-align:left;
-}
-
-.galette_form label {
-    font-weight: bold;
-    background-color: #DDDDFF;
-    padding:0.1em 0.3em;
-    margin-bottom:1em;
-    display:block;
-    vertical-align:top;
-    padding:5px;
 }
 
 .cssform .bline, .galette_form label{

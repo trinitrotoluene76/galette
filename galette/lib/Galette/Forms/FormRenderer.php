@@ -38,6 +38,8 @@
 namespace Galette\Forms;
 
 use Aura\Html\HelperLocatorFactory;
+use Aura\Html\HelperLocator;
+use Aura\Input\Fieldset;
 
 /**
  * Form renderer
@@ -84,20 +86,66 @@ class FormRenderer
 
         foreach ( $this->_form->getInputNames() as $name ) {
             $input = $this->_form->get($name);
+
+            if ( $input instanceof Fieldset ) {
+                $html .= $helper->tag(
+                    'fieldset', [
+                        'class' => 'galette_form'
+                    ]
+                );
+
+                $html .= $helper->tag('legend');
+                $html .= $name;
+                $html .= $helper->tag('/legend');
+
+                $html .= $this->renderFieldset(
+                    $input->get('galette_fieldset'),
+                    $helper
+                );
+
+                $html .= $helper->tag('/fieldset');
+            } else {
+                //well, this is not possible.
+                throw new \RuntimeException(
+                    'Form can only contains fieldsets.'
+                );
+            }
+        }
+
+        $html .= $helper->tag('/form');
+
+        return $html;
+    }
+
+    /**
+     * Renders a field
+     *
+     * @param Fieldset      $fieldset The fieldset
+     * @param HelperLocator $helper   Helper instance
+     *
+     * @return string
+     */
+    protected function renderFieldset(Fieldset $fieldset, HelperLocator $helper)
+    {
+        $html = $helper->tag('div');
+        foreach ( $fieldset->getInputNames() as $name ) {
+            $input = $fieldset->get($name);
             $label = $this->_form->getLabel($name);
 
-            $html .= $helper->tag('p');
+            if ( $input['type'] !== 'hidden' ) {
+                $html .= $helper->tag('p');
 
-            if ( $label !== null ) {
-                if ( $input['type'] === 'radio' ) {
-                    $html .= $helper->tag('span');
-                    $html .= $label;
-                    $html .= $helper->tag('/span');
-                } else {
-                    $html .= $helper->label(
-                        $label,
-                        ['for' => $name]
-                    );
+                if ( $label !== null ) {
+                    if ( $input['type'] === 'radio' ) {
+                        $html .= $helper->tag('span');
+                        $html .= $label;
+                        $html .= $helper->tag('/span');
+                    } else {
+                        $html .= $helper->label(
+                            $label,
+                            ['for' => $name]
+                        );
+                    }
                 }
             }
 
@@ -111,11 +159,11 @@ class FormRenderer
                 )
             );
 
-            $html .= $helper->tag('/p');
+            if ( $input['type'] !== 'hidden' ) {
+                $html .= $helper->tag('/p');
+            }
         }
-
-        $html .= $helper->tag('/form');
-
+        $html .= $helper->tag('/div');
         return $html;
     }
 }
