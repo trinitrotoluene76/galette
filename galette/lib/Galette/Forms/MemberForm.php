@@ -3,11 +3,11 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * Form element
+ * Member form
  *
  * PHP version 5
  *
- * Copyright © 2012-2013 The Galette Team
+ * Copyright © 2014 The Galette Team
  *
  * This file is part of Galette (http://galette.tuxfamily.org).
  *
@@ -63,7 +63,7 @@ use Aura\Input\Filter;
  * @link      http://galette.tuxfamily.org
  * @since     Available since 0.8.2dev - 2014-10-25
  */
-class Form extends AForm
+class MemberForm extends AForm
 {
     private $_table;
     private $_zdb;

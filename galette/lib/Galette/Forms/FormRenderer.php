@@ -40,6 +40,7 @@ namespace Galette\Forms;
 use Aura\Html\HelperLocatorFactory;
 use Aura\Html\HelperLocator;
 use Aura\Input\Fieldset;
+use Aura\Input\Form;
 
 /**
  * Form renderer
