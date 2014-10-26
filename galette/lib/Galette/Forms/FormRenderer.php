@@ -146,6 +146,7 @@ class FormRenderer
                             ['for' => $name]
                         );
                     }
+                    $html .= "\n";
                 }
             }
 

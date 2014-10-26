@@ -165,7 +165,19 @@ class Form extends AForm
                     }
 
                     if ( $field->field_id == 'titre_adh' ) {
-                        $element->setOptions(Titles::getArrayList($this->_zdb));
+                        $none_key = '';
+                        if ( $field->required == 1 ) {
+                            $none_key = '-1';
+                        }
+                        $none = array(
+                            $none_key => _T("Not supplied")
+                        );
+                        $element->setOptions(
+                            array_merge(
+                                $none,
+                                Titles::getArrayList($this->_zdb)
+                            )
+                        );
                     }
 
                     if ( $field->field_id == 'sexe_adh' ) {
