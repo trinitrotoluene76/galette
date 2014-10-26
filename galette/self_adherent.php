@@ -270,7 +270,7 @@ if ( isset($head_redirect) ) {
 }
 // /self_adh specific
 
-$form = new MemberForm($zdb, $i18n, Adherent::TABLE);
+$form = new MemberForm($zdb, $i18n, true);
 $form_renderer = new FormRenderer($form);
 $tpl->assign('form', $form_renderer);
 

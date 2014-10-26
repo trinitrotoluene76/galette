@@ -79,7 +79,7 @@ class FormRenderer
         $html = '';
         $html = $helper->form(
             array(
-                'id'        => 'self_adherent',
+                'id'        => $this->_form->getId(),
                 'method'    => 'post',
                 'action'    => '',
             )
@@ -130,6 +130,9 @@ class FormRenderer
     {
         $html = $helper->tag('div');
         foreach ( $fieldset->getInputNames() as $name ) {
+            if ( $this->_form->isSelfExcluded($name) ) {
+                continue;
+            }
             $input = $fieldset->get($name);
             $label = $this->_form->getLabel($name);
 
