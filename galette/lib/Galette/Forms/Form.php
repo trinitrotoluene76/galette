@@ -87,6 +87,7 @@ class Form extends ZForm
 
         $this->setAttribute('method', 'post');
         $this->setAttribute('id', $this->_table . '_form');
+        $this->setAttribute('action', '');
 
         /*parent::__construct($options);
         $this->setAttrib('id', $this->_table . '_form');
@@ -112,53 +113,52 @@ class Form extends ZForm
         $categories = $fc->getCategorizedFields();
 
         foreach ( $elements as $elt ) {
-            /*$fieldset = new Fieldset($elt->label);
-            $this->add($fieldset);*/
-
-            $this->add(
+            $fieldset = new Fieldset(
+                $elt->label,
                 array(
-                    'name'      => $elt->label,
-                    'type'      => 'Zend\Form\Fieldset',
-                    'options'   => array(
-                        'use_as_base_fieldset' => true
-                    )
+                    'label' => $elt->label
                 )
             );
+            $fieldset->setattribute('class', 'galette_form');
 
-            /*$zf = new ZForm();*/
-            /*$zf = new \Zend_Form_SubForm();
-
-            $zf->setLegend($elt->label);
-            $elements = array();
             foreach ( $elt->elements as $field ) {
                 switch ( $field->type ) {
                 case FieldsConfig::TYPE_HIDDEN:
-                    $class = 'Galette\Forms\Elements\Hidden';
+                    $class = '\Zend\Form\Element\Hidden';
                     break;
                 case FieldsConfig::TYPE_BOOL:
-                    $class = 'Galette\Forms\Elements\Checkbox';
+                    $class = '\Zend\Form\Element\Checkbox';
                     break;
                 case FieldsConfig::TYPE_DATE:
-                    $class = 'Galette\Forms\Elements\Date';
+                    $class = '\Zend\Form\Element\Date';
                     break;
                 case FieldsConfig::TYPE_RADIO:
-                    $class = 'Galette\Forms\Elements\Radio';
+                    $class = '\Zend\Form\Element\Radio';
                     break;
                 case FieldsConfig::TYPE_SELECT:
-                    $class = 'Galette\Forms\Elements\Select';
+                    $class = '\Zend\Form\Element\Select';
                     break;
                 default:
                 case FieldsConfig::TYPE_STR:
-                    $class = 'Galette\Forms\Elements\Text';
+                    $class = '\Zend\Form\Element\Text';
                 }
-                $element =  new $class($field->field_id);
+                $element =  new $class(
+                    $field->field_id,
+                    array(
+                        'label' => $field->label,
+                        'label_options' => array(
+                            'always_wrap' => false
+                        )
+                    )
+                );
+                $element->setAttribute('id', $field->field_id);
 
                 if ( $field->field_id == 'titre_adh' ) {
-                    $element->setMultiOptions(Titles::getArrayList($this->_zdb));
+                    $element->setValueOptions(Titles::getArrayList($this->_zdb));
                 }
 
                 if ( $field->field_id == 'sexe_adh' ) {
-                    $element->setMultiOptions(
+                    $element->setValueOptions(
                         array(
                             Adherent::NC    => _T("Unspecified"),
                             Adherent::MAN   => _T("Man"),
@@ -168,32 +168,33 @@ class Form extends ZForm
                 }
 
                 if ( $field->field_id == 'pref_lang' ) {
-                    $element->setMultiOptions(
+                    $element->setValueOptions(
                         $this->_i18n->getArrayList()
                     );
                 }
 
                 if ( $field->field_id == 'id_statut' ) {
                     $status = new Status();
-                    $element->setMultiOptions(
+                    $element->setValueOptions(
                         $status->getList()
                     );
                 }
 
-                if ( $field->required == 1 ) {
+                /*if ( $field->required == 1 ) {
                     $element->setRequired(true);
                 }
                 $element->setLabel($field->label);
-                $this->_validators($element, $field);
-                $elements[] = $element;
+                $this->_validators($element, $field);*/
+                $fieldset->add($element);
             }
-            $zf->addElements($elements);
+            /*$zf->addElements($elements);
 
             $zf->getDecorator('HtmlTag')->setOption('tag', 'div');
             $zf->getDecorator('Fieldset')->setOption('class', 'galette_form');
             $zf->removeDecorator('DtDdWrapper');
 
             $this->addSubForm($zf, 'subform_' . rand(0, 50));*/
+            $this->add($fieldset);
         }
     }
 
@@ -257,6 +258,27 @@ class Form extends ZForm
     public function render()
     {
         $fhelper = new \Zend\Form\View\Helper\Form();
-        return $fhelper->render($this);
+
+        $html = '';
+
+        $this->prepare();
+
+        $zview = new \Zend\View\Renderer\PhpRenderer();
+        $plugins = $zview->getHelperPluginManager();
+        $config  = new \Zend\Form\View\HelperConfig;
+        $config->configureServiceManager($plugins);
+        $formLabel = $zview->plugin('formLabel');
+        $formRow = $zview->plugin('formRow');
+        $formCollection = $zview->plugin('formCollection');
+
+        $html = $fhelper->openTag($this);
+
+        $fieldsets = $this->getFieldsets();
+        foreach ( $fieldsets as $fieldset ) {
+            $html .= $formCollection->render($fieldset);
+        }
+
+        $html .= $fhelper->closeTag();
+        return $html;
     }
 }
