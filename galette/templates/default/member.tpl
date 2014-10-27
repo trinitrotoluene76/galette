@@ -1,4 +1,3 @@
-{$form->render()}
 {if isset($navigate) and $navigate|@count != 0}
     <nav>
         <a id="prev" href="{if isset($navigate.prev)}?id_adh={$navigate.prev}{else}#{/if}" class="button{if !isset($navigate.prev)} selected{/if}">{_T string="Previous"}</a>
@@ -22,6 +21,7 @@
             </div>
 {else}
             <p>{_T string="NB : The mandatory fields are in"} <span class="required">{_T string="red"}</span></p>
+            {$form->render()}
             <fieldset class="cssform">
                 <legend class="ui-state-active ui-corner-top">{_T string="Identity:"}</legend>
                 <div>

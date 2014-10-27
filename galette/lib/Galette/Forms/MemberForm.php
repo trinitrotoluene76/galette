@@ -69,15 +69,16 @@ class MemberForm extends AForm
     private $_zdb;
     private $_i18n;
     private $_labels = array();
-    /** Fields that will not be rendered on self subscription page */
-    private $_self_excluded = array(
+
+    private $_staff_fields = array(
         'activite_adh',
         'id_statut',
-        'bool_admin_adh',
         'bool_exempt_adh',
         'date_crea_adh',
-        'info_adh',
-        ''
+        'info_adh'
+    );
+    private $_admin_fields = array(
+        'bool_admin_adh'
     );
 
     /**
@@ -98,21 +99,6 @@ class MemberForm extends AForm
         $this->_self = $self;
 
         parent::__construct(new Builder, new Filter);
-
-        /*parent::__construct('');
-
-        $this->setAttribute('method', 'post');
-        $this->setAttribute('id', $this->_table . '_form');*/
-
-        /*parent::__construct($options);
-        $this->setAttrib('id', $this->_table . '_form');
-        $view = new \Zend_View();
-        $this->setView($view);
-        $helper = new FormRadio();
-        $view->registerHelper($helper, 'gformRadio');
-        $helper = new FormSelect();
-        $view->registerHelper($helper, 'gformSelect');*/
-        /*$this->_loadElements();*/
     }
 
     /**
@@ -148,7 +134,13 @@ class MemberForm extends AForm
      */
     public function isSelfExcluded($name)
     {
-        return in_array($name, $this->_self_excluded);
+        return in_array(
+            $name,
+            array_merge(
+                $this->_staff_fields,
+                $this->_admin_fields
+            )
+        );
     }
 
     /**

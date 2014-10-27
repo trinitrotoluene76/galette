@@ -328,7 +328,7 @@ class FieldsConfig
     {
         return $this->_non_required;
     }
-   
+
     /**
      * Retrieve form elements
      *
@@ -359,7 +359,7 @@ class FieldsConfig
                         $o = (object)$elt;
 
                         if ( !($o->visible == self::ADMIN && !$login->isAdmin()) ) {
-                            if ( $o->visible == 0 ) {
+                            if ( $o->visible == self::HIDDEN ) {
                                 $o->type = self::TYPE_HIDDEN;
                             } else if (preg_match('/date/', $o->field_id) ) {
                                 $o->type = self::TYPE_DATE;
