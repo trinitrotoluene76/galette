@@ -144,17 +144,32 @@ class FormRenderer
                 $html .= $helper->tag('p', $attributes);
 
                 if ( $label !== null ) {
+                    $tip = $this->getTip($name, $helper);
                     if ( $input['type'] === 'radio' ) {
-                        $html .= $helper->tag('span', ['class' => 'bline']);
+                        $class = 'bline';
+                        if ( $tip !== '' ) {
+                            $class .= ' tooltip';
+                        }
+                        $html .= $helper->tag('span', ['class' => $class]);
                         $html .= $label;
                         $html .= $helper->tag('/span');
                     } else {
+                        $attributes = [
+                            'for' => $name
+                        ];
+                        if ( $tip !== '' ) {
+                            $attributes['class'] = 'tooltip';
+                            //a title - even if empty - is required
+                            //for tooltip to work.
+                            $attributes['title'] = '';
+                        }
                         $html .= $helper->label(
                             $label,
-                            ['for' => $name]
+                            $attributes
                         );
                     }
                     $html .= "\n";
+                    $html .= $tip;
                 }
             }
 
@@ -173,6 +188,30 @@ class FormRenderer
             }
         }
         $html .= $helper->tag('/div');
+        return $html;
+    }
+
+    /**
+     * Get text tip for a field
+     *
+     * @param string        $name   Field name
+     * @param HelperLocator $helper Helper instance
+     *
+     * @return string
+     */
+    protected function getTip($name, $helper)
+    {
+        $html = '';
+
+        switch ( $name ) {
+        case 'bool_display_info':
+            $html .= $helper->tag('span', ['class' => 'tip']);
+            $html .= _T("If you check this box (and if you are up to date with your contributions), your full name, website adress ad other informations will be publically visilbe on the members list.<br/>If you've uploaded a photo, it will be displayed on the trombinoscope page.<br/>Note that administrators can disabled public pages, this setting will have no effect in that case.");
+            $html .= $helper->tag('/span');
+
+            break;
+        }
+
         return $html;
     }
 }
