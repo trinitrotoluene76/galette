@@ -137,11 +137,15 @@ class FormRenderer
             $label = $this->_form->getLabel($name);
 
             if ( $input['type'] !== 'hidden' ) {
-                $html .= $helper->tag('p');
+                $attributes = array();
+                if ( $input['type'] === 'radio' ) {
+                    $attributes['class'] = 'radios';
+                }
+                $html .= $helper->tag('p', $attributes);
 
                 if ( $label !== null ) {
                     if ( $input['type'] === 'radio' ) {
-                        $html .= $helper->tag('span');
+                        $html .= $helper->tag('span', ['class' => 'bline']);
                         $html .= $label;
                         $html .= $helper->tag('/span');
                     } else {

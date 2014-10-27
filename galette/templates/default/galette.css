@@ -1836,11 +1836,19 @@ th.bline, td.bline{
     text-align:left;
 }
 
-.cssform .bline, .galette_form label{
+.cssform .bline, .galette_form label, .galette_form .bline {
     display: inline-block;
     margin: 0 0 0 -22em;
     width: 19.9em;
     padding-right: 20px;
+}
+
+.galette_form .radios label {
+    display: inline;
+    width: auto;
+    background: none;
+    margin: 0;
+    font-weight: normal;
 }
 
 label.simplelabel {
@@ -1860,6 +1868,20 @@ label.simplelabel {
 
 .cssform .ui-button-text-only .ui-button-text {
     padding: .1em 1em;
+}
+
+.galette_form #pref_lang option {
+    background-repeat: no-repeat;
+    padding-left: 30px;
+    background-position: 0 50%;
+}
+
+.galette_form #pref_lang option[value='fr_FR'] {
+    background-image: url(images/french.gif);
+}
+
+.galette_form #pref_lang option[value='en_US'] {
+    background-image: url(images/english.gif);
 }
 
 .logo{

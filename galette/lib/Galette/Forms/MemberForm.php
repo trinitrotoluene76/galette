@@ -192,6 +192,9 @@ class MemberForm extends AForm
                     if ( $field->required == 1 ) {
                         $attributes['required'] = 'required';
                     }
+                    if ( $type == 'radio' ) {
+                        unset($attributes['id']);
+                    }
 
                     $element = $fieldset->setField($field->field_id, $type)
                         ->setAttribs($attributes);
