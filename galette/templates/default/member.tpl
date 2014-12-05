@@ -211,6 +211,11 @@
             <a href="#" id="back2top">{_T string="Back to top"}</a>
         </div>
         </form>
+{/if}
+{/block}
+
+{block name="javascripts"}
+{if !$self_adh and !$head_redirect}
         <script type="text/javascript">
             $(function() {
                 $('#is_company').change(function(){
