@@ -67,11 +67,11 @@ class Plugins
     /**
      * Set Slim instance
      *
-     * @param Slim $app Slim app instance
+     * @param \Slim\App $app Slim app instance
      *
      * @return void
      */
-    public function setApp(\Slim\Slim $app)
+    public function setApp(\Slim\App $app)
     {
         $this->app = $app;
     }
