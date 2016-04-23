@@ -39,6 +39,7 @@ namespace Galette\Core;
 
 use Analog\Analog;
 use Galette\Common\ClassLoader;
+use Galette\Core\Preferences;
 
 /**
  * Plugins class for galette
@@ -62,18 +63,19 @@ class Plugins
     protected $id;
     protected $mroot;
 
-    private $app;
+    private $preferences;
 
     /**
-     * Set Slim instance
+     * Set Galette's preferences
      *
-     * @param \Slim\App $app Slim app instance
+     * @param Preferences $preferences Galette's Preferences
      *
-     * @return void
+     * @return Plugins
      */
-    public function setApp(\Slim\App $app)
+    public function setPreferences(Preferences $preferences)
     {
-        $this->app = $app;
+        $this->preferences = $preferences;
+        return $this;
     }
 
     /**
@@ -304,8 +306,6 @@ class Plugins
      */
     public function loadModuleL10N($id, $language)
     {
-        global $lang;
-
         if (!$language || !isset($this->modules[$id])) {
             return;
         }
@@ -409,12 +409,11 @@ class Plugins
      * Search and load menu templates from plugins.
      * Also sets the web path to the plugin with the var "galette_[plugin-name]_path"
      *
-     * @param Smarty      $tpl         Smarty template
-     * @param Preferences $preferences Galette's preferences
+     * @param Smarty $tpl Smarty template
      *
      * @return void
      */
-    public function getMenus($tpl, $preferences)
+    public function getMenus($tpl)
     {
         $modules = $this->getModules();
         foreach (array_keys($this->getModules()) as $r) {
@@ -436,13 +435,12 @@ class Plugins
      * Search and load public menu templates from plugins.
      * Also sets the web path to the plugin with the var "galette_[plugin-name]_path"
      *
-     * @param Smarty      $tpl         Smarty template
-     * @param Preferences $preferences Galette's preferences
-     * @param boolean     $public_page Called from a public page
+     * @param Smarty  $tpl         Smarty template
+     * @param boolean $public_page Called from a public page
      *
      * @return void
      */
-    public function getPublicMenus($tpl, $preferences, $public_page = false)
+    public function getPublicMenus($tpl, $public_page = false)
     {
         $modules = $this->getModules();
         foreach (array_keys($this->getModules()) as $r) {
@@ -490,8 +488,7 @@ class Plugins
      */
     public function getTemplatesPath($id)
     {
-        global $preferences;
-        return $this->moduleRoot($id) . '/templates/' . $preferences->pref_theme;
+        return $this->moduleRoot($id) . '/templates/' . $this->preferences->pref_theme;
     }
 
     /**
@@ -589,7 +586,6 @@ class Plugins
      */
     public function getTplAssignments()
     {
-        global $preferences;
         $_assign = array();
         foreach ($this->modules as $key => $module) {
             if (isset($module['tpl_assignments'])) {
@@ -607,7 +603,7 @@ class Plugins
                     $v = str_replace(
                         '__plugin_templates_dir__',
                         'plugins/' . $key . '/templates/' .
-                        $preferences->pref_theme . '/',
+                        $this->preferences->pref_theme . '/',
                         $v
                     );
                     $_assign[$k] = $v;
