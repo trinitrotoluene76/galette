@@ -1285,7 +1285,7 @@ class Adherent
                 //we're editing an existing member
                 if ( !$this->isDueFree() ) {
                     // deadline
-                    $due_date = Contribution::getDueDate($this->_id);
+                    $due_date = Contribution::getDueDate($this->zdb, $this->_id);
                     if ( $due_date ) {
                         $values['date_echeance'] = $due_date;
                     }
