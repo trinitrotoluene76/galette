@@ -685,7 +685,7 @@ class Adherent
             $cdate = new \DateTime($this->_creation_date);
             $replace = array(
                 $this->_oldness,
-                $cdate->format(_T("Y-m-d"))
+                $cdate->format(__("Y-m-d"))
             );
             if ( $this->_active ) {
                 $ret = preg_replace(
@@ -703,7 +703,7 @@ class Adherent
             $ddate = new \DateTime($this->_due_date);
             $replace = array(
                 $this->_days_remaining *-1,
-                $ddate->format(_T("Y-m-d"))
+                $ddate->format(__("Y-m-d"))
             );
             if ( $this->_active ) {
                 $ret = preg_replace(
@@ -719,7 +719,7 @@ class Adherent
             $ddate = new \DateTime($this->_due_date);
             $replace = array(
                 $this->_days_remaining,
-                $ddate->format(_T("Y-m-d"))
+                $ddate->format(__("Y-m-d"))
             );
             $ret = preg_replace(
                 $patterns,
@@ -932,7 +932,7 @@ class Adherent
                     case 'date_crea_adh':
                     case 'ddn_adh':
                         try {
-                            $d = \DateTime::createFromFormat(_T("Y-m-d"), $value);
+                            $d = \DateTime::createFromFormat(__("Y-m-d"), $value);
                             if ( $d === false ) {
                                 //try with non localized date
                                 $d = \DateTime::createFromFormat("Y-m-d", $value);
@@ -945,7 +945,7 @@ class Adherent
                             Analog::log(
                                 'Wrong date format. field: ' . $key .
                                 ', value: ' . $value . ', expected fmt: ' .
-                                _T("Y-m-d") . ' | ' . $e->getMessage(),
+                                __("Y-m-d") . ' | ' . $e->getMessage(),
                                 Analog::INFO
                             );
                             $errors[] = str_replace(
@@ -954,7 +954,7 @@ class Adherent
                                     '%field'
                                 ),
                                 array(
-                                    _T("Y-m-d"),
+                                    __("Y-m-d"),
                                     $this->_fields[$key]['label']
                                 ),
                                 _T("- Wrong date format (%date_format) for %field!")
@@ -1380,7 +1380,7 @@ class Adherent
                 if ( $this->$rname != '' ) {
                     try {
                         $d = new \DateTime($this->$rname);
-                        return $d->format(_T("Y-m-d"));
+                        return $d->format(__("Y-m-d"));
                     } catch (\Exception $e) {
                         //oops, we've got a bad date :/
                         Analog::log(
