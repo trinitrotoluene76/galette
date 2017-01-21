@@ -808,7 +808,6 @@ class Adherent
 			 ->where('ddn_adh = ?', $ddn2);
 		if ($select->query()->rowCount() > 0) 
 			{
-			//echo('res>0');
 			$result=true;
 			}//fin du if
 			
@@ -919,14 +918,7 @@ class Adherent
                             $d = \DateTime::createFromFormat(_T("Y-m-d"), $value);
 							$birthdate= \DateTime::createFromFormat(_T("Y-m-d"),$value);
 							$today= new \DateTime("now");
-							//echo('today:');
-							//var_dump($today);
-							//echo('birthdate:');
-							//var_dump($birthdate);
-							//echo('diff:');
 							$age=$birthdate->diff($today);
-							//var_dump($age->format('%R%Y'));
-
 							$age=$age->format('%Y');
 							if($age>200 || $age<1)
 								{
