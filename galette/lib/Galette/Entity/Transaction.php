@@ -40,6 +40,8 @@ namespace Galette\Entity;
 use Analog\Analog;
 use Zend\Db\Sql\Expression;
 use Galette\Repository\Contributions;
+use Galette\Core\Db;
+use Galette\Core\History;
 
 /**
  * Transaction class for galette
@@ -67,15 +69,20 @@ class Transaction
     //fields list and their translation
     private $_fields;
 
+    private $zdb;
+
     /**
      * Default constructor
      *
+     * @param Db                 $zdb  Database instance
      * @param null|int|ResultSet $args Either a ResultSet row or its id for to load
      *                                   a specific transaction, or null to just
      *                                   instanciate object
      */
-    public function __construct($args = null)
+    public function __construct(Db $zdb, $args = null)
     {
+        $this->zdb = $zdb;
+
         /*
          * Fields configuration. Each field is an array and must reflect:
          * array(
@@ -108,14 +115,14 @@ class Transaction
                 'propname' => 'member'
             )
         );
-        if ( $args == null || is_int($args) ) {
+        if ($args == null || is_int($args)) {
             $this->_date = date("Y-m-d");
 
-            if ( is_int($args) && $args > 0 ) {
+            if (is_int($args) && $args > 0) {
                 $this->load($args);
             }
-        } elseif ( is_object($args) ) {
-            $this->_loadFromRS($args);
+        } elseif (is_object($args)) {
+            $this->loadFromRS($args);
         }
     }
 
@@ -128,16 +135,14 @@ class Transaction
      */
     public function load($id)
     {
-        global $zdb;
-
         try {
-            $select = $zdb->select(self::TABLE);
+            $select = $this->zdb->select(self::TABLE);
             $select->where(self::PK . ' = ' . $id);
 
-            $results = $zdb->execute($select);
+            $results = $this->zdb->execute($select);
             $result = $results->current();
-            if ( $result ) {
-                $this->_loadFromRS($result);
+            if ($result) {
+                $this->loadFromRS($result);
                 return true;
             } else {
                 throw new \Exception;
@@ -161,38 +166,36 @@ class Transaction
      */
     public function remove($transaction = true)
     {
-        global $zdb;
-
         try {
-            if ( $transaction ) {
-                $zdb->connection->beginTransaction();
+            if ($transaction) {
+                $this->zdb->connection->beginTransaction();
             }
 
             //remove associated contributions if needeed
-            if ( $this->getDispatchedAmount() > 0 ) {
+            if ($this->getDispatchedAmount() > 0) {
                 $c = new Contributions();
                 $clist = $c->getListFromTransaction($this->_id);
                 $cids = array();
-                foreach ( $clist as $cid) {
+                foreach ($clist as $cid) {
                     $cids[] = $cid->id;
                 }
                 $rem = $c->removeContributions($cids, false);
             }
 
             //remove transaction itself
-            $delete = $zdb->delete(self::TABLE);
+            $delete = $this->zdb->delete(self::TABLE);
             $delete->where(
                 self::PK . ' = ' . $this->_id
             );
-            $zdb->execute($delete);
+            $this->zdb->execute($delete);
 
-            if ( $transaction ) {
-                $zdb->connection->commit();
+            if ($transaction) {
+                $this->zdb->connection->commit();
             }
             return true;
         } catch (\Exception $e) {
-            if ( $transaction ) {
-                $zdb->connection->rollBack();
+            if ($transaction) {
+                $this->zdb->connection->rollBack();
             }
             Analog::log(
                 'An error occured trying to remove transaction #' .
@@ -210,7 +213,7 @@ class Transaction
      *
      * @return void
      */
-    private function _loadFromRS($r)
+    private function loadFromRS($r)
     {
         $pk = self::PK;
         $this->_id = $r->$pk;
@@ -233,97 +236,96 @@ class Transaction
      */
     public function check($values, $required, $disabled)
     {
-        global $zdb;
         $errors = array();
 
         $fields = array_keys($this->_fields);
-        foreach ( $fields as $key ) {
+        foreach ($fields as $key) {
             //first of all, let's sanitize values
             $key = strtolower($key);
             $prop = '_' . $this->_fields[$key]['propname'];
 
-            if ( isset($values[$key]) ) {
+            if (isset($values[$key])) {
                 $value = trim($values[$key]);
             } else {
                 $value = '';
             }
 
             // if the field is enabled, check it
-            if ( !isset($disabled[$key]) ) {
+            if (!isset($disabled[$key])) {
                 // now, check validity
-                if ( $value != '' ) {
-                    switch ( $key ) {
-                    // dates
-                    case 'trans_date':
-                        try {
-                            $d = \DateTime::createFromFormat(_T("Y-m-d"), $value);
-                            if ( $d === false ) {
-                                throw new \Exception('Incorrect format');
+                if ($value != '') {
+                    switch ($key) {
+                        // dates
+                        case 'trans_date':
+                            try {
+                                $d = \DateTime::createFromFormat(__("Y-m-d"), $value);
+                                if ($d === false) {
+                                    throw new \Exception('Incorrect format');
+                                }
+                                $this->$prop = $d->format('Y-m-d');
+                            } catch (\Exception $e) {
+                                Analog::log(
+                                    'Wrong date format. field: ' . $key .
+                                    ', value: ' . $value . ', expected fmt: ' .
+                                    __("Y-m-d") . ' | ' . $e->getMessage(),
+                                    Analog::INFO
+                                );
+                                $errors[] = str_replace(
+                                    array(
+                                        '%date_format',
+                                        '%field'
+                                    ),
+                                    array(
+                                        __("Y-m-d"),
+                                        $this->_fields[$key]['label']
+                                    ),
+                                    _T("- Wrong date format (%date_format) for %field!")
+                                );
                             }
-                            $this->$prop = $d->format('Y-m-d');
-                        } catch (\Exception $e) {
-                            Analog::log(
-                                'Wrong date format. field: ' . $key .
-                                ', value: ' . $value . ', expected fmt: ' .
-                                _T("Y-m-d") . ' | ' . $e->getMessage(),
-                                Analog::INFO
-                            );
-                            $errors[] = str_replace(
-                                array(
-                                    '%date_format',
-                                    '%field'
-                                ),
-                                array(
-                                    _T("Y-m-d"),
-                                    $this->_fields[$key]['label']
-                                ),
-                                _T("- Wrong date format (%date_format) for %field!")
-                            );
-                        }
-                        break;
-                    case Adherent::PK:
-                        $this->_member = $value;
-                        break;
-                    case 'trans_amount':
-                        $this->_amount = $value;
-                        $value = strtr($value, ',', '.');
-                        if ( !is_numeric($value) ) {
-                            $errors[] = _T("- The amount must be an integer!");
-                        }
-                        break;
-                    case 'trans_desc':
-                        /** TODO: retrieve field length from database and check that */
-                        $this->_description = $value;
-                        if ( trim($value) == '' ) {
-                            $errors[] = _T("- Empty transaction description!");
-                        } else if (strlen($value) > 150 ) {
-                            $errors[] = _T("- Transaction description must be 150 characters long maximum.");
-                        }
-                        break;
+                            break;
+                        case Adherent::PK:
+                            $this->_member = $value;
+                            break;
+                        case 'trans_amount':
+                            $this->_amount = $value;
+                            $value = strtr($value, ',', '.');
+                            if (!is_numeric($value)) {
+                                $errors[] = _T("- The amount must be an integer!");
+                            }
+                            break;
+                        case 'trans_desc':
+                            /** TODO: retrieve field length from database and check that */
+                            $this->_description = $value;
+                            if (trim($value) == '') {
+                                $errors[] = _T("- Empty transaction description!");
+                            } elseif (strlen($value) > 150) {
+                                $errors[] = _T("- Transaction description must be 150 characters long maximum.");
+                            }
+                            break;
                     }
                 }
             }
         }
 
         // missing required fields?
-        while ( list($key, $val) = each($required) ) {
-            if ( $val === 1) {
+        while (list($key, $val) = each($required)) {
+            if ($val === 1) {
                 $prop = '_' . $this->_fields[$key]['propname'];
-                if ( !isset($disabled[$key]) && !isset($this->$prop) ) {
+                if (!isset($disabled[$key]) && !isset($this->$prop)) {
                     $errors[] = _T("- Mandatory field empty: ") .
                     ' <a href="#' . $key . '">' . $this->getFieldName($key) .'</a>';
                 }
             }
         }
 
-        if ( $this->_id != '' ) {
+        if ($this->_id != '') {
             $dispatched = $this->getDispatchedAmount();
-            if ( $dispatched > $this->_amount ) {
+            if ($dispatched > $this->_amount) {
                 $errors[] = _T("- Sum of all contributions exceed corresponding transaction amount.");
             }
         }
 
-        if ( count($errors) > 0 ) {
+        if (count($errors) > 0) {
             Analog::log(
                 'Some errors has been throwed attempting to edit/store a transaction' .
                 print_r($errors, true),
@@ -342,41 +344,41 @@ class Transaction
     /**
      * Store the transaction
      *
+     * @param History $hist History
+     *
      * @return boolean
      */
-    public function store()
+    public function store(History $hist)
     {
-        global $zdb, $hist;
-
         try {
-            $zdb->connection->beginTransaction();
+            $this->zdb->connection->beginTransaction();
             $values = array();
-            $fields = self::getDbFields();
+            $fields = $this->getDbFields($this->zdb);
             /** FIXME: quote? */
-            foreach ( $fields as $field ) {
+            foreach ($fields as $field) {
                 $prop = '_' . $this->_fields[$field]['propname'];
                 $values[$field] = $this->$prop;
             }
 
-            if ( !isset($this->_id) || $this->_id == '') {
+            if (!isset($this->_id) || $this->_id == '') {
                 //we're inserting a new transaction
                 unset($values[self::PK]);
-                $insert = $zdb->insert(self::TABLE);
+                $insert = $this->zdb->insert(self::TABLE);
                 $insert->values($values);
-                $add = $zdb->execute($insert);
-                if ( $add->count() > 0) {
-                    if ( $zdb->isPostgres() ) {
-                        $this->_id = $zdb->driver->getLastGeneratedValue(
+                $add = $this->zdb->execute($insert);
+                if ($add->count() > 0) {
+                    if ($this->zdb->isPostgres()) {
+                        $this->_id = $this->zdb->driver->getLastGeneratedValue(
                             PREFIX_DB . 'transactions_id_seq'
                         );
                     } else {
-                        $this->_id = $zdb->driver->getLastGeneratedValue();
+                        $this->_id = $this->zdb->driver->getLastGeneratedValue();
                     }
 
                     // logging
                     $hist->add(
                         _T("Transaction added"),
-                        Adherent::getSName($this->_member)
+                        Adherent::getSName($this->zdb, $this->_member)
                     );
                 } else {
                     $hist->add(_T("Fail to add new transaction."));
@@ -386,24 +388,24 @@ class Transaction
                 }
             } else {
                 //we're editing an existing transaction
-                $update = $zdb->update(self::TABLE);
+                $update = $this->zdb->update(self::TABLE);
                 $update->set($values)->where(
                     self::PK . '=' . $this->_id
                 );
-                $edit = $zdb->execute($update);
+                $edit = $this->zdb->execute($update);
                 //edit == 0 does not mean there were an error, but that there
                 //were nothing to change
-                if ( $edit->count() > 0 ) {
+                if ($edit->count() > 0) {
                     $hist->add(
                         _T("Transaction updated"),
-                        Adherent::getSName($this->_member)
+                        Adherent::getSName($this->zdb, $this->_member)
                     );
                 }
             }
-            $zdb->connection->commit();
+            $this->zdb->connection->commit();
             return true;
         } catch (\Exception $e) {
-            $zdb->connection->rollBack();
+            $this->zdb->connection->rollBack();
             Analog::log(
                 'Something went wrong :\'( | ' . $e->getMessage() . "\n" .
                 $e->getTraceAsString(),
@@ -420,17 +422,15 @@ class Transaction
      */
     public function getDispatchedAmount()
     {
-        global $zdb;
-
         try {
-            $select = $zdb->select(Contribution::TABLE);
+            $select = $this->zdb->select(Contribution::TABLE);
             $select->columns(
                 array(
                     'sum' => new Expression('SUM(montant_cotis)')
                 )
             )->where(self::PK . ' = ' . $this->_id);
 
-            $results = $zdb->execute($select);
+            $results = $this->zdb->execute($select);
             $result = $results->current();
             $dispatched_amount = $result->sum;
             return (double)$dispatched_amount;
@@ -450,17 +450,15 @@ class Transaction
      */
     public function getMissingAmount()
     {
-        global $zdb;
-
         try {
-            $select = $zdb->select(Contribution::TABLE);
+            $select = $this->zdb->select(Contribution::TABLE);
             $select->columns(
                 array(
                     'sum' => new Expression('SUM(montant_cotis)')
                 )
             )->where(self::PK . ' = ' . $this->_id);
 
-            $results = $zdb->execute($select);
+            $results = $this->zdb->execute($select);
             $result = $results->current();
             $dispatched_amount = $result->sum;
             return (double)$this->_amount - (double)$dispatched_amount;
@@ -476,14 +474,15 @@ class Transaction
     /**
      * Retrieve fields from database
      *
+     * @param Db $zdb Database instance
+     *
      * @return array
      */
-    public static function getDbFields()
+    public function getDbFields(Db $zdb)
     {
-        global $zdb;
         $columns = $zdb->getColumns(self::TABLE);
         $fields = array();
-        foreach ( $columns as $col ) {
+        foreach ($columns as $col) {
             $fields[] = $col->getName();
         }
         return $fields;
@@ -513,27 +512,27 @@ class Transaction
         $forbidden = array();
 
         $rname = '_' . $name;
-        if ( !in_array($name, $forbidden) && isset($this->$rname) ) {
-            switch($name) {
-            case 'date':
-                if ( $this->$rname != '' ) {
-                    try {
-                        $d = new \DateTime($this->$rname);
-                        return $d->format(_T("Y-m-d"));
-                    } catch (\Exception $e) {
-                        //oops, we've got a bad date :/
-                        Analog::log(
-                            'Bad date (' . $this->$rname . ') | ' .
-                            $e->getMessage(),
-                            Analog::INFO
-                        );
-                        return $this->$rname;
+        if (!in_array($name, $forbidden) && isset($this->$rname)) {
+            switch ($name) {
+                case 'date':
+                    if ($this->$rname != '') {
+                        try {
+                            $d = new \DateTime($this->$rname);
+                            return $d->format(__("Y-m-d"));
+                        } catch (\Exception $e) {
+                            //oops, we've got a bad date :/
+                            Analog::log(
+                                'Bad date (' . $this->$rname . ') | ' .
+                                $e->getMessage(),
+                                Analog::INFO
+                            );
+                            return $this->$rname;
+                        }
                     }
-                }
-                break;
-            default:
-                return $this->$rname;
-                break;
+                    break;
+                default:
+                    return $this->$rname;
+                    break;
             }
         } else {
             return false;

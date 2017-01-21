@@ -39,6 +39,7 @@ namespace Galette\Core;
 
 use Analog\Analog;
 use Galette\Common\ClassLoader;
+use Galette\Core\Preferences;
 
 /**
  * Plugins class for galette
@@ -62,6 +63,18 @@ class Plugins
     protected $id;
     protected $mroot;
 
+    protected $preferences;
+
+    /**
+     * Constructor
+     *
+     * @param Preferences $preferences Galette's Preferences
+     */
+    public function __construct(Preferences $preferences)
+    {
+        $this->preferences = $preferences;
+    }
+
     /**
      * Loads modules.
      *
@@ -72,7 +85,7 @@ class Plugins
      *
      * @return void
      */
-    public function loadModules($path, $lang=null)
+    public function loadModules($path, $lang = null)
     {
         $this->path = explode(PATH_SEPARATOR, $path);
 
@@ -92,17 +105,19 @@ class Plugins
             while (($entry = $d->read()) !== false) {
                 $full_entry = $root . $entry;
 
-                if ( $entry != '.' && $entry != '..' && is_dir($full_entry)
-                    && file_exists($full_entry.'/_define.php')
+                if ($entry != '.' && $entry != '..' && is_dir($full_entry)
+                    && file_exists($full_entry . '/_define.php')
                 ) {
-                    if (!file_exists($full_entry.'/_disabled')) {
+                    if (!file_exists($full_entry.'/_disabled')
+                        && file_exists($full_entry . '/_routes.php')
+                    ) {
                         $this->id = $entry;
                         $this->mroot = $full_entry;
                         include $full_entry . '/_define.php';
                         $this->id = null;
                         $this->mroot = null;
                         //set autoloader to PluginName.
-                        if ( file_exists($full_entry . '/lib') ) {
+                        if (file_exists($full_entry . '/lib')) {
                             $varname = $entry . 'Loader';
                             $$varname = new ClassLoader(
                                 str_replace(' ', '', $this->modules[$entry]['name']),
@@ -122,12 +137,13 @@ class Plugins
         }
 
         // Sort plugins
-        uasort($this->modules, array($this, '_sortModules'));
+        uasort($this->modules, array($this, 'sortModules'));
 
         // Load translation, _prepend and ns_file
         foreach ($this->modules as $id => $m) {
             $this->loadModuleL10N($id, $lang);
             $this->loadSmarties($id);
+            $this->overridePrefs($id);
         }
     }
 
@@ -142,23 +158,30 @@ class Plugins
      * <var>$priority</var> is an integer. Modules are sorted by priority and name.
      * Lowest priority comes first.
      *
-     * @param string  $name        Module name
-     * @param string  $desc        Module description
-     * @param string  $author      Module author name
-     * @param string  $version     Module version
-     * @param string  $compver     Galette version compatibility
-     * @param string  $date        Module release date
-     * @param string  $permissions Module permissions
-     * @param integer $priority    Module priority
+     * @param string  $name     Module name
+     * @param string  $desc     Module description
+     * @param string  $author   Module author name
+     * @param string  $version  Module version
+     * @param string  $compver  Galette version compatibility
+     * @param string  $route    Module route name
+     * @param string  $date     Module release date
+     * @param string  $acls     Module routes ACLs
+     * @param integer $priority Module priority
      *
      * @return void
      */
     public function register(
-        $name, $desc, $author, $version, $compver = null, $date = null,
-        $permissions=null, $priority=1000
+        $name,
+        $desc,
+        $author,
+        $version,
+        $compver = null,
+        $route = null,
+        $date = null,
+        $acls = null,
+        $priority = 1000
     ) {
-
-        if ( $compver === null ) {
+        if ($compver === null) {
             //plugin compatibility missing!
             Analog::log(
                 'Plugin ' . $name . ' does not contains mandatory version ' .
@@ -169,7 +192,7 @@ class Plugins
                 'root' => $this->mroot,
                 'root_writable' => is_writable($this->mroot)
             );
-        } elseif ( version_compare($compver, GALETTE_COMPAT_VERSION, '<') ) {
+        } elseif (version_compare($compver, GALETTE_COMPAT_VERSION, '<')) {
             //plugin is not compatible with that version of galette.
             Analog::log(
                 'Plugin ' . $name . ' is known to be compatible with Galette ' .
@@ -184,12 +207,12 @@ class Plugins
         } else {
             if ($this->id) {
                 $release_date = $date;
-                if ( $date !== null ) {
+                if ($date !== null) {
                     //try to localize release date
                     try {
                         $release_date = new \DateTime($date);
-                        $release_date = $release_date->format(_T("Y-m-d"));
-                    } catch ( \Exception $e ) {
+                        $release_date = $release_date->format(__("Y-m-d"));
+                    } catch (\Exception $e) {
                         Analog::log(
                             'Unable to localize release date for plugin ' . $name,
                             Analog::WARNING
@@ -203,12 +226,13 @@ class Plugins
                     'desc'          => $desc,
                     'author'        => $author,
                     'version'       => $version,
-                    'permissions'   => $permissions,
+                    'acls'          => $acls,
                     'date'          => $release_date,
                     'priority'      => $priority === null ?
                                          1000 :
                                          (integer) $priority,
-                    'root_writable' => is_writable($this->mroot)
+                    'root_writable' => is_writable($this->mroot),
+                    'route'         => $route
                 );
             }
         }
@@ -241,7 +265,7 @@ class Plugins
             throw new \Exception(_T("Cannot deactivate plugin."));
         }
 
-        if ( @file_put_contents($this->modules[$id]['root'] . '/_disabled', '') ) {
+        if (@file_put_contents($this->modules[$id]['root'] . '/_disabled', '')) {
             throw new \Exception(_T("Cannot deactivate plugin."));
         }
     }
@@ -280,14 +304,21 @@ class Plugins
      */
     public function loadModuleL10N($id, $language)
     {
-        global $lang;
-
         if (!$language || !isset($this->modules[$id])) {
             return;
         }
 
-        $f = $this->modules[$id]['root'] . '/lang' . '/lang_' . $language . '.php';
-        if ( file_exists($f) ) {
+        //main plugin translations
+        $f = $this->modules[$id]['root'] . '/lang/' . $this->modules[$id]['route'] . '_' . $language . '.php';
+        if (file_exists($f)) {
+            $lang = &$GLOBALS['lang'];
+            include_once $f;
+        }
+
+        //plugin routes translations
+        $f = $this->modules[$id]['root'] . '/lang/' . $this->modules[$id]['route'] . '_routes_' . $language . '.php';
+        if (file_exists($f)) {
+            $lang = &$GLOBALS['lang'];
             include_once $f;
         }
     }
@@ -302,9 +333,9 @@ class Plugins
     public function loadSmarties($id)
     {
         $f = $this->modules[$id]['root'] . '/_smarties.php';
-        if ( file_exists($f) ) {
+        if (file_exists($f)) {
             include_once $f;
-            if ( isset($_tpl_assignments) ) {
+            if (isset($_tpl_assignments)) {
                 $this->modules[$id]['tpl_assignments'] = $_tpl_assignments;
             }
         }
@@ -318,7 +349,7 @@ class Plugins
      *
      * @return <b>array</b>
      */
-    public function getModules($id=null)
+    public function getModules($id = null)
     {
         if ($id && isset($this->modules[$id])) {
             return $this->modules[$id];
@@ -376,7 +407,7 @@ class Plugins
      *
      * @return module's informations
      */
-    public function moduleInfo($id,$info)
+    public function moduleInfo($id, $info)
     {
         return isset($this->modules[$id][$info]) ? $this->modules[$id][$info] : null;
     }
@@ -385,17 +416,16 @@ class Plugins
      * Search and load menu templates from plugins.
      * Also sets the web path to the plugin with the var "galette_[plugin-name]_path"
      *
-     * @param Smarty      $tpl         Smarty template
-     * @param Preferences $preferences Galette's preferences
+     * @param Smarty $tpl Smarty template
      *
      * @return void
      */
-    public function getMenus($tpl, $preferences)
+    public function getMenus($tpl)
     {
         $modules = $this->getModules();
-        foreach ( array_keys($this->getModules()) as $r ) {
+        foreach (array_keys($this->getModules()) as $r) {
             $menu_path = $this->getTemplatesPath($r) . '/menu.tpl';
-            if ( $tpl->template_exists($menu_path) ) {
+            if ($tpl->templateExists($menu_path)) {
                 $name2path = strtolower(
                     str_replace(' ', '_', $modules[$r]['name'])
                 );
@@ -412,18 +442,17 @@ class Plugins
      * Search and load public menu templates from plugins.
      * Also sets the web path to the plugin with the var "galette_[plugin-name]_path"
      *
-     * @param Smarty      $tpl         Smarty template
-     * @param Preferences $preferences Galette's preferences
-     * @param boolean     $public_page Called from a public page
+     * @param Smarty  $tpl         Smarty template
+     * @param boolean $public_page Called from a public page
      *
      * @return void
      */
-    public function getPublicMenus($tpl, $preferences, $public_page = false)
+    public function getPublicMenus($tpl, $public_page = false)
     {
         $modules = $this->getModules();
-        foreach ( array_keys($this->getModules()) as $r ) {
+        foreach (array_keys($this->getModules()) as $r) {
             $menu_path = $this->getTemplatesPath($r) . '/public_menu.tpl';
-            if ( $tpl->template_exists($menu_path) ) {
+            if ($tpl->templateExists($menu_path)) {
                 $name2path = strtolower(
                     str_replace(' ', '_', $modules[$r]['name'])
                 );
@@ -448,7 +477,7 @@ class Plugins
      *
      * @return 1 if a has the highest priority, -1 otherwise
      */
-    private function _sortModules($a, $b)
+    private function sortModules($a, $b)
     {
         if ($a['priority'] == $b['priority']) {
             return strcasecmp($a['name'], $b['name']);
@@ -466,8 +495,7 @@ class Plugins
      */
     public function getTemplatesPath($id)
     {
-        global $preferences;
-        return $this->moduleRoot($id) . '/templates/' . $preferences->pref_theme;
+        return $this->moduleRoot($id) . '/templates/' . $this->preferences->pref_theme;
     }
 
     /**
@@ -480,9 +508,9 @@ class Plugins
     public function getTemplatesPathFromName($name)
     {
         $id = null;
-        foreach ( array_keys($this->getModules()) as $r ) {
+        foreach (array_keys($this->getModules()) as $r) {
             $mod = $this->getModules($r);
-            if ( $mod['name'] === $name ) {
+            if ($mod['name'] === $name) {
                 return $this->getTemplatesPath($r);
             }
         }
@@ -496,10 +524,10 @@ class Plugins
     public function getTplHeaders()
     {
         $_headers = array();
-        foreach ( $this->modules as $key=>$module ) {
+        foreach (array_keys($this->modules) as $key) {
             $headers_path = $this->getTemplatesPath($key) . '/headers.tpl';
-            if ( file_exists($headers_path) ) {
-                $_headers[] = $headers_path;
+            if (file_exists($headers_path)) {
+                $_headers[$key] = $headers_path;
             }
         }
         return $_headers;
@@ -513,10 +541,10 @@ class Plugins
     public function getTplAdhActions()
     {
         $_actions = array();
-        foreach ( $this->modules as $key=>$module ) {
+        foreach (array_keys($this->modules) as $key) {
             $actions_path = $this->getTemplatesPath($key) . '/adh_actions.tpl';
-            if ( file_exists($actions_path) ) {
-                $_actions[] = $actions_path;
+            if (file_exists($actions_path)) {
+                $_actions['actions_' . $key] = $actions_path;
             }
         }
         return $_actions;
@@ -531,10 +559,10 @@ class Plugins
     public function getTplAdhBatchActions()
     {
         $_actions = array();
-        foreach ( $this->modules as $key=>$module ) {
+        foreach (array_keys($this->modules) as $key) {
             $actions_path = $this->getTemplatesPath($key) . '/adh_batch_action.tpl';
-            if ( file_exists($actions_path) ) {
-                $_actions[] = $actions_path;
+            if (file_exists($actions_path)) {
+                $_actions['batch_action_' . $key] = $actions_path;
             }
         }
         return $_actions;
@@ -549,10 +577,10 @@ class Plugins
     public function getTplAdhDetailledActions()
     {
         $_actions = array();
-        foreach ( $this->modules as $key=>$module ) {
+        foreach (array_keys($this->modules) as $key) {
             $actions_path = $this->getTemplatesPath($key) . '/adh_fiche_action.tpl';
-            if ( file_exists($actions_path) ) {
-                $_actions[] = $actions_path;
+            if (file_exists($actions_path)) {
+                $_actions['det_actions_' . $key] = $actions_path;
             }
         }
         return $_actions;
@@ -565,11 +593,10 @@ class Plugins
      */
     public function getTplAssignments()
     {
-        global $preferences;
         $_assign = array();
-        foreach ( $this->modules as $key=>$module ) {
-            if ( isset($module['tpl_assignments']) ) {
-                foreach ( $module['tpl_assignments'] as $k=>$v ) {
+        foreach ($this->modules as $key => $module) {
+            if (isset($module['tpl_assignments'])) {
+                foreach ($module['tpl_assignments'] as $k => $v) {
                     $v = str_replace(
                         '__plugin_dir__',
                         'plugins/' . $key . '/',
@@ -583,7 +610,7 @@ class Plugins
                     $v = str_replace(
                         '__plugin_templates_dir__',
                         'plugins/' . $key . '/templates/' .
-                        $preferences->pref_theme . '/',
+                        $this->preferences->pref_theme . '/',
                         $v
                     );
                     $_assign[$k] = $v;
@@ -602,9 +629,9 @@ class Plugins
      */
     public function needsDatabase($id)
     {
-        if ( isset($this->modules[$id]) ) {
+        if (isset($this->modules[$id])) {
             $d = $this->modules[$id]['root'] . '/scripts/';
-            if ( file_exists($d) ) {
+            if (file_exists($d)) {
                 return true;
             } else {
                 return false;
@@ -614,4 +641,63 @@ class Plugins
         }
     }
 
+    /**
+     * Override preferences from plugin
+     *
+     * @param string $id Module ID
+     *
+     * @return void
+     */
+    public function overridePrefs($id)
+    {
+        $overridables = ['pref_adhesion_form'];
+
+        $f = $this->modules[$id]['root'] . '/_preferences.php';
+        if (file_exists($f)) {
+            include_once $f;
+            if (isset($_preferences)) {
+                foreach ($_preferences as $k => $v) {
+                    if (in_array($k, $overridables)) {
+                        $this->preferences->$k = $v;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Get plugins routes ACLs
+     *
+     * @return array
+     */
+    public function getAcls()
+    {
+        $acls = [];
+        foreach ($this->modules as $module) {
+            $acls = array_merge($acls, $module['acls']);
+        }
+        return $acls;
+    }
+
+    /**
+     * Retrieve a file that should be publically exposed
+     *
+     * @param int    $id   Module id
+     * @param string $path File path
+     *
+     * @return string
+     */
+    public function getFile($id, $path)
+    {
+        if (isset($this->modules[$id])) {
+            $file = $this->modules[$id]['root'] . '/webroot/' . $path;
+            if (file_exists($file)) {
+                return $file;
+            } else {
+                throw new \RuntimeException(_T("File not found!"));
+            }
+        } else {
+            throw new \Exception(_T("Module does not exists!"));
+        }
+    }
 }

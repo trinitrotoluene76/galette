@@ -1,14 +1,11 @@
-    {*<p id="collapse" class="ui-state-default ui-corner-all">
+{extends file="page.tpl"}
+{block name="content"}
+    <p id="collapse" class="ui-state-default ui-corner-all">
         <span class="ui-icon ui-icon-circle-arrow-s"></span>
         {_T string="Collapse all"}
-    </p>*}
-    {* TODO: Dynamically generate required tabs entries *}
-    {*<ul id="tabs">
-        <li{if $current eq 'membership'} class="current_tab"{/if}><a href="?table=membership">{_T string="Membership"}</a></li>
-        <li{if $current eq 'members'} class="current_tab"{/if}><a href="?table=members">{_T string="Members"}</a></li>
-    </ul>*}
-    <form action="config_fields.php" method="post" id="config_fields_form">
-    <div id="{$current}_tab">
+    </p>
+    <form action="{path_for name="configureCoreFields"}" method="post" id="config_fields_form">
+    <div id="members_tab">
         {*<a href="#" title="{_T string="Add a new category"}" id="add_category">{_T string="Add new category"}</a>*}
 {foreach item=category from=$categories name=categories_list}
         <fieldset class="cssform large" id="cat_{$smarty.foreach.categories_list.iteration}">
@@ -40,11 +37,11 @@
                     </span>
                     <span class="yesnoadmin" title="{_T string="Change '%field' visibility" pattern="/%field/" replace=$field.label}">
                         <label for="{$fid}_visible_yes">{_T string="Yes"}</label>
-                        <input type="radio" name="{$fid}_visible" id="{$fid}_visible_yes" value="{php}echo Galette\Entity\FieldsConfig::VISIBLE;{/php}"{if $field.visible eq constant('Galette\Entity\FieldsConfig::VISIBLE')} checked="checked"{/if}/>
+                        <input type="radio" name="{$fid}_visible" id="{$fid}_visible_yes" value="{Galette\Entity\FieldsConfig::VISIBLE}"{if $field.visible eq constant('Galette\Entity\FieldsConfig::VISIBLE')} checked="checked"{/if}/>
                         <label for="{$fid}_visible_no">{_T string="No"}</label>
-                        <input type="radio" name="{$fid}_visible" id="{$fid}_visible_no" value="{php}echo Galette\Entity\FieldsConfig::HIDDEN;{/php}"{if $field.visible eq constant('Galette\Entity\FieldsConfig::HIDDEN')} checked="checked"{/if}/>
+                        <input type="radio" name="{$fid}_visible" id="{$fid}_visible_no" value="{Galette\Entity\FieldsConfig::HIDDEN}"{if $field.visible eq constant('Galette\Entity\FieldsConfig::HIDDEN')} checked="checked"{/if}/>
                         <label for="{$fid}_visible_admin">{_T string="Admin only"}</label>
-                        <input type="radio" name="{$fid}_visible" id="{$fid}_visible_admin" value="{php}echo Galette\Entity\FieldsConfig::ADMIN;{/php}"{if $field.visible eq constant('Galette\Entity\FieldsConfig::ADMIN')} checked="checked"{/if}/>
+                        <input type="radio" name="{$fid}_visible" id="{$fid}_visible_admin" value="{Galette\Entity\FieldsConfig::ADMIN}"{if $field.visible eq constant('Galette\Entity\FieldsConfig::ADMIN')} checked="checked"{/if}/>
                     </span>
                 </li>
         {/if}
@@ -57,6 +54,9 @@
             <input type="submit" value="{_T string="Save"}"/>
         </div>
     </form>
+{/block}
+
+{block name="javascripts"}
     <script type="text/javascript">
         var _initSortable = function(){
             $('.fields_list').sortable({
@@ -179,7 +179,7 @@
                 _legend.prepend(_a);
                 _a.spinDown();
 
-                $('#{$current}_tab').append(_fs);
+                $('#members_tab').append(_fs);
                 _initSortable();
                 _bindCollapse();
 
@@ -197,3 +197,4 @@
             });
         });
     </script>
+{/block}

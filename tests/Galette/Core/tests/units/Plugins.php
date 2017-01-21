@@ -53,6 +53,8 @@ use \atoum;
  */
 class Plugins extends atoum
 {
+    private $zdb;
+    private $preferences;
     private $_plugins;
 
     private $_plugin2 = array(
@@ -61,22 +63,29 @@ class Plugins extends atoum
         'desc'          => 'Test two plugin',
         'author'        => 'Johan Cwiklinski',
         'version'       => '1.0',
-        'permissions'   => null,
+        'acls'          => [
+            'plugin2_root'  => 'member',
+            'plugin2_admin' => 'staff'
+        ],
         'date'          => '2013-12-15',
         'priority'      => 1000,
-        'root_writable' => true
+        'root_writable' => true,
+        'route'         => 'plugin2'
     );
 
     /**
      * Set up tests
      *
-     * @param stgring $testMethod Method tested
+     * @param string $testMethod Method tested
      *
      * @return void
      */
     public function beforeTestMethod($testMethod)
     {
-        $this->_plugins = new \Galette\Core\Plugins();
+        $this->zdb = new \Galette\Core\Db();
+        $this->preferences = new \Galette\Core\Preferences($this->zdb);
+
+        $this->_plugins = new \Galette\Core\Plugins($this->preferences);
         $this->_plugins->loadModules(GALETTE_PLUGINS_PATH);
 
         $this->_plugin2['root'] = GALETTE_PLUGINS_PATH .
@@ -91,7 +100,7 @@ class Plugins extends atoum
      */
     public function testLoadModules()
     {
-        $plugins = new \Galette\Core\Plugins();
+        $plugins = new \Galette\Core\Plugins($this->preferences);
         $plugins->loadModules(GALETTE_PLUGINS_PATH);
 
         $this->array($this->_plugins->getModules())
@@ -183,20 +192,20 @@ class Plugins extends atoum
             ->hasKey('plugin-test2');
         $this->_plugins->deactivateModule('plugin-test2');
 
-        $this->_plugins = new \Galette\Core\Plugins();
+        $this->_plugins = new \Galette\Core\Plugins($this->preferences);
         $this->_plugins->loadModules(GALETTE_PLUGINS_PATH);
         $this->array($this->_plugins->getModules())
             ->notHasKey('plugin-test2');
         $this->_plugins->activateModule('plugin-test2');
 
-        $this->_plugins = new \Galette\Core\Plugins();
+        $this->_plugins = new \Galette\Core\Plugins($this->preferences);
         $this->_plugins->loadModules(GALETTE_PLUGINS_PATH);
         $this->array($this->_plugins->getModules())
             ->hasKey('plugin-test2');
 
         $this->exception(
             function () {
-                $plugins = new \Galette\Core\Plugins();
+                $plugins = new \Galette\Core\Plugins($this->preferences);
                 $plugins->loadModules(GALETTE_PLUGINS_PATH);
                 $plugins->deactivateModule('nonexistant');
             }
@@ -204,7 +213,7 @@ class Plugins extends atoum
 
         $this->exception(
             function () {
-                $plugins = new \Galette\Core\Plugins();
+                $plugins = new \Galette\Core\Plugins($this->preferences);
                 $plugins->loadModules(GALETTE_PLUGINS_PATH);
                 $plugins->activateModule('nonexistant');
             }
@@ -225,7 +234,7 @@ class Plugins extends atoum
 
         $this->exception(
             function () {
-                $plugins = new \Galette\Core\Plugins();
+                $plugins = new \Galette\Core\Plugins($this->preferences);
                 $plugins->loadModules(GALETTE_PLUGINS_PATH);
                 $plugins->needsDatabase('nonexistant');
             }

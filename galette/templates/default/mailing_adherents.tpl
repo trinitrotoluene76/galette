@@ -1,10 +1,12 @@
+{extends file="page.tpl"}
+{block name="content"}
 {if $pref_mail_method == constant('Galette\Core\Mailing::METHOD_DISABLED') and $GALETTE_MODE neq 'DEMO'}
         <div id="errorbox">
             <h1>{_T string="- ERROR -"}</h1>
             <p>{_T string="Email sent is disabled in the preferences. Ask galette admin"}</p>
         </div>
 {elseif !isset($mailing_saved)}
-        <form action="mailing_adherents.php#mail_preview" id="listform" method="post" enctype="multipart/form-data">
+        <form action="{path_for name="mailing"}#mail_preview" id="listform" method="post" enctype="multipart/form-data">
         <div class="mailing">
             <section class="mailing_infos">
                 <header class="ui-state-default ui-state-active">{_T string="Mailing informations"}</header>
@@ -27,13 +29,13 @@
                 <p id="unreachables_count">
                     <strong>{$count_unreachables} {if $count_unreachables != 1}{_T string="unreachable members:"}{else}{_T string="unreachable member:"}{/if}</strong><br/>
                     {_T string="Some members you have selected have no e-mail address. However, you can generate envelope labels to contact them by snail mail."}
-                    <br/><a id="btnlabels" class="button" href="etiquettes_adherents.php?from=mailing">{_T string="Generate labels"}</a>
+                    <br/><a id="btnlabels" class="button" href="{path_for name="pdf-members-labels"}?from=mailing">{_T string="Generate labels"}</a>
                 </p>
     {/if}
 
                 <div class="center">
     {if $mailing->current_step eq constant('Galette\Core\Mailing::STEP_SENT')}
-                    <a class="button" id="btnusers" href="gestion_adherents.php">{_T string="Go back to members list"}</a>
+                    <a class="button" id="btnusers" href="{path_for name="members"}">{_T string="Go back to members list"}</a>
     {else}
                     <a class="button" id="btnusers" href="gestion_adherents.php?nbshow=0&showChecked=true">{_T string="Manage selected members"}</a>
     {/if}
@@ -113,6 +115,11 @@
             </section>
         </div>
         </form>
+{/if}
+{/block}
+
+{block name="javascripts"}
+{if ($pref_mail_method != constant('Galette\Core\Mailing::METHOD_DISABLED') or $GALETTE_MODE eq 'DEMO') and !isset($mailing_saved)}
     {if $mailing->current_step neq constant('Galette\Core\Mailing::STEP_SENT')}
 <script type="text/javascript">
     $(function() {
@@ -126,10 +133,9 @@
                 _attachments[_attachments.length] = $(this).text();
             });
             $.ajax({
-                url: 'ajax_mailing_preview.php',
+                url: '{path_for name="mailingPreview"}',
                 type: "POST",
                 data: {
-                    ajax: true,
                     subject: _subject,
                     body: _body,
                     html: _html,
@@ -286,7 +292,7 @@
                     Ok: function() {
                         var _this = $(this);
                         _this.dialog( "close" );
-                        window.location.href = 'mailing_adherents.php' + _link.attr('href');
+                        window.location.href = '{path_for name="mailing"}' + _link.attr('href');
                     },
                     {_T string="Cancel"}: function() {
                          $(this).dialog( "close" );
@@ -302,3 +308,4 @@
 </script>
     {/if}
 {/if}
+{/block}

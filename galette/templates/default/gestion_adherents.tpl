@@ -1,6 +1,9 @@
-        <form action="gestion_adherents.php" method="get" id="filtre">
+{extends file="page.tpl"}
+
+{block name="content"}
+        <form action="{path_for name="filter-memberslist"}" method="post" id="filtre">
         <div id="listfilter">
-{if !$adv_filters}
+{if !isset($adv_filters) || !$adv_filters}
             <label for="filter_str">{_T string="Search:"}&nbsp;</label>
             <input type="text" name="filter_str" id="filter_str" value="{$filters->filter_str}" type="search" placeholder="{_T string="Enter a value"}"/>&nbsp;
              {_T string="in:"}&nbsp;
@@ -24,11 +27,11 @@
             <input type="submit" name="clear_filter" class="inline" value="{_T string="Clear filter"}"/>
             <div>
                 {_T string="Members that have an email address:"}
-                <input type="radio" name="email_filter" id="filter_dc_email" value="{php}echo Galette\Repository\Members::FILTER_DC_EMAIL;{/php}"{if $filters->email_filter eq constant('Galette\Repository\Members::FILTER_DC_EMAIL')} checked="checked"{/if}>
+                <input type="radio" name="email_filter" id="filter_dc_email" value="{Galette\Repository\Members::FILTER_DC_EMAIL}"{if $filters->email_filter eq constant('Galette\Repository\Members::FILTER_DC_EMAIL')} checked="checked"{/if}>
                 <label for="filter_dc_email" >{_T string="Don't care"}</label>
-                <input type="radio" name="email_filter" id="filter_with_email" value="{php}echo Galette\Repository\Members::FILTER_W_EMAIL;{/php}"{if $filters->email_filter eq constant('Galette\Repository\Members::FILTER_W_EMAIL')} checked="checked"{/if}>
+                <input type="radio" name="email_filter" id="filter_with_email" value="{Galette\Repository\Members::FILTER_W_EMAIL}"{if $filters->email_filter eq constant('Galette\Repository\Members::FILTER_W_EMAIL')} checked="checked"{/if}>
                 <label for="filter_with_email" >{_T string="With"}</label>
-                <input type="radio" name="email_filter" id="filter_without_email" value="{php}echo Galette\Repository\Members::FILTER_WO_EMAIL;{/php}"{if $filters->email_filter eq constant('Galette\Repository\Members::FILTER_WO_EMAIL')} checked="checked"{/if}>
+                <input type="radio" name="email_filter" id="filter_without_email" value="{Galette\Repository\Members::FILTER_WO_EMAIL}"{if $filters->email_filter eq constant('Galette\Repository\Members::FILTER_WO_EMAIL')} checked="checked"{/if}>
                 <label for="filter_without_email" >{_T string="Without"}</label>
             </div>
 {else}
@@ -55,19 +58,19 @@
             </tr>
         </table>
         </form>
-        <form action="gestion_adherents.php" method="post" id="listform">
+        <form action="{path_for name="batch-memberslist"}" method="post" id="listform">
         <table class="listing">
             <thead>
                 <tr>
 {if $preferences->pref_show_id}
                     <th class="id_row">
-                        <a href="gestion_adherents.php?tri={php}echo Galette\Repository\Members::ORDERBY_ID;{/php}">
+                        <a href="{path_for name="members" data=["option" => {_T string='order' domain="routes"}, "value" => "Galette\Repository\Members::ORDERBY_ID"|constant]}">
                             {_T string="Mbr num"}
                             {if $filters->orderby eq constant('galette\Repository\Members::ORDERBY_ID')}
                                 {if $filters->ordered eq constant('Galette\Filters\MembersList::ORDER_ASC')}
-                            <img src="{$template_subdir}images/down.png" width="10" height="6" alt=""/>
+                            <img src="{base_url}/{$template_subdir}images/down.png" width="10" height="6" alt=""/>
                                 {else}
-                            <img src="{$template_subdir}images/up.png" width="10" height="6" alt=""/>
+                            <img src="{base_url}/{$template_subdir}images/up.png" width="10" height="6" alt=""/>
                                 {/if}
                             {/if}
                         </a>
@@ -76,62 +79,62 @@
                     <th class="id_row">#</th>
 {/if}
                     <th class="left">
-                        <a href="gestion_adherents.php?tri={php}echo Galette\Repository\Members::ORDERBY_NAME;{/php}">
+                        <a href="{path_for name="members" data=["option" => {_T string='order' domain="routes"}, "value" => "Galette\Repository\Members::ORDERBY_NAME"|constant]}">
                             {_T string="Name"}
                             {if $filters->orderby eq constant('galette\Repository\Members::ORDERBY_NAME')}
                                 {if $filters->ordered eq constant('Galette\Filters\MembersList::ORDER_ASC')}
-                            <img src="{$template_subdir}images/down.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/down.png" width="10" height="6" alt=""/>
                                 {else}
-                            <img src="{$template_subdir}images/up.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/up.png" width="10" height="6" alt=""/>
                                 {/if}
                             {/if}
                         </a>
                     </th>
                     <th class="left">
-                        <a href="gestion_adherents.php?tri={php}echo Galette\Repository\Members::ORDERBY_NICKNAME;{/php}">
+                        <a href="{path_for name="members" data=["option" => {_T string='order' domain="routes"}, "value" => "Galette\Repository\Members::ORDERBY_NICKNAME"|constant]}">
                             {_T string="Nickname"}
                             {if $filters->orderby eq constant('Galette\Repository\Members::ORDERBY_NICKNAME')}
                                 {if $filters->ordered eq constant('Galette\Filters\MembersList::ORDER_ASC')}
-                            <img src="{$template_subdir}images/down.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/down.png" width="10" height="6" alt=""/>
                                 {else}
-                            <img src="{$template_subdir}images/up.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/up.png" width="10" height="6" alt=""/>
                                 {/if}
                             {/if}
                         </a>
                     </th>
                     <th class="left">
-                        <a href="gestion_adherents.php?tri={php}echo Galette\Repository\Members::ORDERBY_STATUS;{/php}">
+                        <a href="{path_for name="members" data=["option" => {_T string='order' domain="routes"}, "value" => "Galette\Repository\Members::ORDERBY_STATUS"|constant]}">
                             {_T string="Status"}
                             {if $filters->orderby eq constant('Galette\Repository\Members::ORDERBY_STATUS')}
                                 {if $filters->ordered eq constant('Galette\Filters\MembersList::ORDER_ASC')}
-                            <img src="{$template_subdir}images/down.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/down.png" width="10" height="6" alt=""/>
                                 {else}
-                            <img src="{$template_subdir}images/up.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/up.png" width="10" height="6" alt=""/>
                                 {/if}
                             {/if}
                         </a>
                     </th>
 {if $login->isAdmin() or $login->isStaff()}
                     <th class="left">
-                        <a href="gestion_adherents.php?tri={php}echo Galette\Repository\Members::ORDERBY_FEE_STATUS;{/php}">
+                        <a href="{path_for name="members" data=["option" => {_T string='order' domain="routes"}, "value" => "Galette\Repository\Members::ORDERBY_FEE_STATUS"|constant]}">
                             {_T string="State of dues"}
                             {if $filters->orderby eq constant('Galette\Repository\Members::ORDERBY_FEE_STATUS')}
                                 {if $filters->ordered eq constant('Galette\Filters\MembersList::ORDER_ASC')}
-                            <img src="{$template_subdir}images/down.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/down.png" width="10" height="6" alt=""/>
                                 {else}
-                            <img src="{$template_subdir}images/up.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/up.png" width="10" height="6" alt=""/>
                                 {/if}
                             {/if}
                         </a>
                     </th>
                     <th class="left">
-                        <a href="gestion_adherents.php?tri={php}echo Galette\Repository\Members::ORDERBY_MODIFDATE;{/php}">
+                        <a href="{path_for name="members" data=["option" => {_T string='order' domain="routes"}, "value" => "Galette\Repository\Members::ORDERBY_MODIFDATE"|constant]}">
                             {_T string="Modified"}
                             {if $filters->orderby eq constant('Galette\Repository\Members::ORDERBY_MODIFDATE')}
                                 {if $filters->ordered eq constant('Galette\Filters\MembersList::ORDER_ASC')}
-                            <img src="{$template_subdir}images/down.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/down.png" width="10" height="6" alt=""/>
                                 {else}
-                            <img src="{$template_subdir}images/up.png" width="10" height="6" alt=""/>
+                                    <img src="{base_url}/{$template_subdir}images/up.png" width="10" height="6" alt=""/>
                                 {/if}
                             {/if}
                         </a>
@@ -161,8 +164,8 @@
                             <li><input type="submit" name="csv" value="{_T string="Export as CSV"}"/></li>
     {/if}
     {if $plugin_batch_actions|@count != 0}
-        {foreach from=$plugin_batch_actions item=action}
-            {include file=$action}
+        {foreach from=$plugin_batch_actions key=plugin_name item=action}
+          {include file=$action module_id=$plugin_name|replace:'batch_action_':''}
         {/foreach}
     {/if}
                         </ul>
@@ -188,32 +191,33 @@
                     <td class="{$rclass} nowrap username_row">
                         <input type="checkbox" name="member_sel[]" value="{$member->id}"/>
                     {if $member->isCompany()}
-                        <img src="{$template_subdir}images/icon-company.png" alt="{_T string="[C]"}" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-company.png" alt="{_T string="[W]"}" width="16" height="16"/>
                     {elseif $member->isMan()}
-                        <img src="{$template_subdir}images/icon-male.png" alt="{_T string="[M]"}" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-male.png" alt="{_T string="[M]"}" width="16" height="16"/>
                     {elseif $member->isWoman()}
-                        <img src="{$template_subdir}images/icon-female.png" alt="{_T string="[W]"}" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-female.png" alt="{_T string="[W]"}" width="16" height="16"/>
                     {else}
-                        <img src="{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
                     {/if}
                     {if $member->email != ''}
-                        <a href="mailto:{$member->email}"><img src="{$template_subdir}images/icon-mail.png" alt="{_T string="[Mail]"}" width="16" height="16"/></a>
+                        <a href="mailto:{$member->email}"><img src="{base_url}/{$template_subdir}images/icon-mail.png" alt="{_T string="[Mail]"}" width="16" height="16"/></a>
                     {else}
-                        <img src="{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
                     {/if}
                     {if $member->website != ''}
-                        <a href="{$member->website}"><img src="{$template_subdir}images/icon-website.png" alt="{_T string="[Website]"}" width="16" height="16"/></a>
+                        <a href="{$member->website}"><img src="{base_url}/{$template_subdir}images/icon-website.png" alt="{_T string="[Website]"}" width="16" height="16"/></a>
                     {else}
-                        <img src="{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
                     {/if}
                     {if $member->isAdmin()}
-                        <img src="{$template_subdir}images/icon-star.png" alt="{_T string="[admin]"}" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-star.png" alt="{_T string="[admin]"}" width="16" height="16"/>
                     {elseif $member->isStaff()}
-                        <img src="{$template_subdir}images/icon-staff.png" alt="{_T string="[staff]"}" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-staff.png" alt="{_T string="[staff]"}" width="16" height="16"/>
                     {else}
-                        <img src="{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
+                        <img src="{base_url}/{$template_subdir}images/icon-empty.png" alt="" width="16" height="16"/>
                     {/if}
-                        <a href="voir_adherent.php?id_adh={$member->id}">{$member->sname}{if $member->company_name} ({$member->company_name}){/if}</a>
+                        {assign var="mid" value=$member->id}
+                        <a href="{path_for name="member" data=["id" => $member->id]}">{$member->sname}{if $member->company_name} ({$member->company_name}){/if}</a>
                     </td>
                     <td class="{$rclass} nowrap">{$member->nickname|htmlspecialchars}</td>
                     <td class="{$rclass} nowrap">{statusLabel id=$member->status}</td>
@@ -222,16 +226,19 @@
                     <td class="{$rclass}">{$member->modification_date}</td>
 {/if}
                     <td class="{$rclass} center nowrap actions_row">
-                        <a href="ajouter_adherent.php?id_adh={$member->id}"><img src="{$template_subdir}images/icon-edit.png" alt="{_T string="[mod]"}" width="16" height="16" title="{_T string="%membername: edit informations" pattern="/%membername/" replace=$member->sname}"/></a>
+                        <a href="{path_for name="editmember" data=["action" => {_T string="edit" domain="routes"}, "id" => $mid]}"><img src="{base_url}/{$template_subdir}images/icon-edit.png" alt="{_T string="[mod]"}" width="16" height="16" title="{_T string="%membername: edit informations" pattern="/%membername/" replace=$member->sname}"/></a>
 {if $login->isAdmin() or $login->isStaff()}
-                        <a href="gestion_contributions.php?id_adh={$member->id}"><img src="{$template_subdir}images/icon-money.png" alt="{_T string="[$]"}" width="16" height="16" title="{_T string="%membername: contributions" pattern="/%membername/" replace=$member->sname}"/></a>
-                        <a onclick="return confirm('{_T string="Do you really want to delete this member from the base? This will also delete the history of his fees. You could instead disable the account.\\n\\nDo you still want to delete this member ?" escape="js"}')" href="gestion_adherents.php?sup={$member->id}"><img src="{$template_subdir}images/icon-trash.png" alt="{_T string="[del]"}" width="16" height="16" title="{_T string="%membername: remove from database" pattern="/%membername/" replace=$member->sname}"/></a>
+                        <a href="{path_for name="contributions" data=["type" => {_T string="contributions" domain="routes"}, "option" => {_T string="member" domain="routes"}, "value" => $member->id]}"><img src="{base_url}/{$template_subdir}images/icon-money.png" alt="{_T string="[$]"}" width="16" height="16" title="{_T string="%membername: contributions" pattern="/%membername/" replace=$member->sname}"/></a>
+                        <a class="delete" href="{path_for name="removeMember" data=["id" => $member->id]}"><img src="{base_url}/{$template_subdir}images/icon-trash.png" alt="{_T string="[del]"}" width="16" height="16" title="{_T string="%membername: remove from database" pattern="/%membername/" replace=$member->sname}"/></a>
+{/if}
+{if $login->isSuperAdmin()}
+                        <a href="{path_for name="impersonate" data=["id" => $mid]}"><img src="{base_url}/{$template_subdir}images/icon-impersonate.png" alt="{_T string="Impersonate"}" width="16" height="16" title="{_T string="Log in in as %membername" pattern="/%membername/" replace=$member->sname}"/></a>
 {/if}
             {* If some additionnals actions should be added from plugins, we load the relevant template file
             We have to use a template file, so Smarty will do its work (like replacing variables). *}
             {if $plugin_actions|@count != 0}
-              {foreach from=$plugin_actions item=action}
-                {include file=$action}
+              {foreach from=$plugin_actions key=plugin_name item=action}
+                {include file=$action module_id=$plugin_name|replace:'actions_':''}
               {/foreach}
             {/if}
                     </td>
@@ -247,56 +254,59 @@
             <h1>{_T string="Legend"}</h1>
             <table>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-male.png" alt="{_T string="Mister"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-male.png" alt="{_T string="Mister"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Man"}</td>
                     <th class="back">{_T string="Name"}</th>
                     <td class="back">{_T string="Active account"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-female.png" alt="{_T string="Miss"} / {_T string="Mrs."}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-female.png" alt="{_T string="Miss"} / {_T string="Mrs"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Woman"}</td>
                     <th class="inactif back">{_T string="Name"}</th>
                     <td class="back">{_T string="Inactive account"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-company.png" alt="{_T string="Society"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-company.png" alt="{_T string="Society"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Society"}</td>
                     <th class="cotis-never color-sample">&nbsp;</th>
                     <td class="back">{_T string="Never contributed"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-staff.png" alt="{_T string="[staff]"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-staff.png" alt="{_T string="[staff]"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Staff member"}</td>
                     <th class="cotis-ok color-sample">&nbsp;</th>
                     <td class="back">{_T string="Membership in order"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-star.png" alt="{_T string="Admin"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-star.png" alt="{_T string="Admin"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Admin"}</td>
                     <th class="cotis-soon color-sample">&nbsp;</th>
                     <td class="back">{_T string="Membership will expire soon (&lt;30d)"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-edit.png" alt="{_T string="Modify"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-edit.png" alt="{_T string="Modify"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Modification"}</td>
                     <th class="cotis-late color-sample">&nbsp;</th>
                     <td class="back">{_T string="Lateness in fee"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-money.png" alt="{_T string="Contribution"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-money.png" alt="{_T string="Contribution"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Contributions"}</td>
-                    <th><img src="{$template_subdir}images/icon-mail.png" alt="{_T string="E-mail"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-mail.png" alt="{_T string="E-mail"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Send a mail"}</td>
                 </tr>
                 <tr>
-                    <th><img src="{$template_subdir}images/icon-trash.png" alt="{_T string="Delete"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-trash.png" alt="{_T string="Delete"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Deletion"}</td>
-                    <th><img src="{$template_subdir}images/icon-website.png" alt="{_T string="Website"}" width="16" height="16"/></th>
+                    <th><img src="{base_url}/{$template_subdir}images/icon-website.png" alt="{_T string="Website"}" width="16" height="16"/></th>
                     <td class="back">{_T string="Website URL"}</td>
                 </tr>
             </table>
         </div>
 {/if}
+{/block}
+
+{block name="javascripts"}
         <script type="text/javascript">
 {if $nb_members != 0}
         var _is_checked = true;
@@ -368,7 +378,7 @@
                             buttons: {
                                 '{_T string="Resume"}': function() {
                                     $(this).dialog( "close" );
-                                    location.href = 'mailing_adherents.php';
+                                    location.href = '{path_for name="mailing"}';
                                 },
                                 '{_T string="New"}': function() {
                                     $(this).dialog( "close" );
@@ -403,13 +413,15 @@
             }
         });
 {if $nb_members != 0}
+        {include file="js_removal.tpl"}
+
         var _attendance_sheet_details = function(){
             var _selecteds = [];
             $('table.listing').find('input[type=checkbox]:checked').each(function(){
                 _selecteds.push($(this).val());
             });
             $.ajax({
-                url: 'ajax_attendance_sheet_details.php',
+                url: '{path_for name="attendance_sheet_details"}',
                 type: "POST",
                 data: {
                     ajax: true,
@@ -440,7 +452,7 @@
                         changeMonth: true,
                         changeYear: true,
                         showOn: 'button',
-                        buttonImage: '{$template_subdir}images/calendar.png',
+                        buttonImage: '{base_url}/{$template_subdir}images/calendar.png',
                         buttonImageOnly: true,
                         yearRange: 'c:c+5',
                         buttonText: '{_T string="Select a date" escape="js"}'
@@ -452,4 +464,5 @@
             });
         }
 {/if}
-        </script>
+    </script>
+{/block}

@@ -1,11 +1,14 @@
+{extends file="$parent_tpl"}
+
+{block name="content"}
 {if isset($navigate) and $navigate|@count != 0}
     <nav>
-        <a id="prev" href="{if isset($navigate.prev)}?id_adh={$navigate.prev}{else}#{/if}" class="button{if !isset($navigate.prev)} selected{/if}">{_T string="Previous"}</a>
+        <a id="prev" href="{if isset($navigate.prev)}{path_for name="editmember" data=["action" => {_T string="edit" domain="routes"}, "id" => $navigate.prev]}{else}#{/if}" class="button{if !isset($navigate.prev)} selected{/if}">{_T string="Previous"}</a>
         {$navigate.pos}/{$navigate.count}
-        <a id="next" href="{if isset($navigate.next)}?id_adh={$navigate.next}{else}#{/if}" class="button{if !isset($navigate.next)} selected{/if}">{_T string="Next"}</a>
+        <a id="next" href="{if isset($navigate.next)}{path_for name="editmember" data=["action" => {_T string="edit" domain="routes"}, "id" => $navigate.next]}{else}#{/if}" class="button{if !isset($navigate.next)} selected{/if}">{_T string="Next"}</a>
     </nav>
 {/if}
-        <form action="{if $login->isLogged()}ajouter_adherent.php{else}self_adherent.php{/if}" method="post" enctype="multipart/form-data" id="form">
+        <form action="{path_for name="storemembers"}" method="post" enctype="multipart/form-data" id="form">
         <div class="bigtable">
 {if $self_adh and $head_redirect}
             <div id="infobox">
@@ -25,7 +28,7 @@
             <div>
         {if $member->hasParent()}
                 <strong>{_T string="Attached to:"}
-                <a href="voir_adherent.php?id_adh={$member->parent->id}">{$member->parent->sfullname}</a></strong><br/>
+                <a href="{path_for name="member" data=["id" => $member->parent->id]}">{$member->parent->sfullname}</a></strong><br/>
             {if $login->isAdmin() or $login->isStaff() or $login->id eq $member->parent->id}
                 <label for="detach_parent">{_T string="Detach?"}</label>
                 <input type="checkbox" name="detach_parent" id="detach_parent" value="1"/>
@@ -59,6 +62,7 @@
                         {/if}
                         {if $entry->field_id eq 'titre_adh'}
                             {assign var="template" value="titles.tpl"}
+                            {assign var="value" value=$member->title}
                         {/if}
                         {if $entry->field_id eq 'pref_lang'}
                             {assign var="template" value="lang.tpl"}
@@ -213,6 +217,11 @@
             <a href="#" id="back2top">{_T string="Back to top"}</a>
         </div>
         </form>
+{/if}
+{/block}
+
+{block name="javascripts"}
+{if !$self_adh and !$head_redirect}
         <script type="text/javascript">
             $(function() {
                 $('#is_company').change(function(){
@@ -226,7 +235,7 @@
                     changeMonth: true,
                     changeYear: true,
                     showOn: 'button',
-                    buttonImage: '{$template_subdir}images/calendar.png',
+                    buttonImage: '{base_url}/{$template_subdir}images/calendar.png',
                     buttonImageOnly: true,
                     maxDate: '-0d',
                     yearRange: 'c-100:c+0',
@@ -236,7 +245,7 @@
                     changeMonth: true,
                     changeYear: true,
                     showOn: 'button',
-                    buttonImage: '{$template_subdir}images/calendar.png',
+                    buttonImage: '{base_url}/{$template_subdir}images/calendar.png',
                     buttonImageOnly: true,
                     maxDate: '-0d',
                     yearRange: 'c-10:c+0',
@@ -475,6 +484,26 @@
     {/if}
                 {include file="photo_dnd.tpl"}
 
+                $('#ddn_adh').on('blur', function() {
+                    var _bdate = $(this).val();
+                    if ('{_T string="Y-m-d"}' === 'Y-m-d') {
+                        _bdate = new Date(_bdate);
+                    } else {
+                        //try for dd/mm/yyyy
+                        var _dparts = _bdate.split("/");
+                        _bdate = new Date(_dparts[2], _dparts[1] - 1, _dparts[0]);
+                    }
+
+                    if (! isNaN(_bdate.getTime())) {
+                        var _today = new Date();
+                        var _age = Math.floor((_today-_bdate) / (365.25 * 24 * 60 * 60 * 1000));
+                        $('#member_age').html('{_T string=" (%age years old)"}'.replace(/%age/, _age))
+                    } else {
+                        $('#member_age').html('');
+                    }
+                });
+
             });
         </script>
 {/if}
+{/block}

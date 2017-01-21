@@ -103,6 +103,10 @@ galette/includes/tcpdf_*
 galette/includes/Zend*
 galette/includes/Analog*
 galette/password_compat*
+galette/vendor/
+
+# API documentation
+apidocs/
 
 #Backup files
 *~
