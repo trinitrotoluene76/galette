@@ -791,14 +791,14 @@ class Adherent
 
 	/**
 	 * Exécute une requête SQL pour trouver le profil doublon
-	 * Retourne 1 si doublon, 0 sinon
+	 * Retourne true si doublon, false sinon
 	 * 
 	 * @param nouvel inscrit avec prenom, nom, date de naissance
 	 */
 	public function is_doublon($nom, $prenom, $ddn) 
 		{
 		global $zdb;
-		$result=0;
+		$result=false;
 		$ddn2 = \DateTime::createFromFormat('j/m/Y',$ddn);
 		$ddn2 = $ddn2->format('Y-m-d');
 		$select = new \Zend_Db_Select($zdb->db);
@@ -809,7 +809,7 @@ class Adherent
 		if ($select->query()->rowCount() > 0) 
 			{
 			//echo('res>0');
-			$result=1;
+			$result=true;
 			}//fin du if
 			
 		return $result;
