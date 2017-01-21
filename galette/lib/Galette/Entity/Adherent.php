@@ -917,8 +917,7 @@ class Adherent
                     case 'ddn_adh':
                         try {
                             $d = \DateTime::createFromFormat(_T("Y-m-d"), $value);
-							
-							$birthdate= \DateTime::createFromFormat('j/m/Y',$value);
+							$birthdate= \DateTime::createFromFormat(_T("Y-m-d"),$value);
 							$today= new \DateTime("now");
 							//echo('today:');
 							//var_dump($today);
