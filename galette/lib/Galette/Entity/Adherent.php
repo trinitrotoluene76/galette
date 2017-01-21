@@ -839,7 +839,7 @@ class Adherent
             unset($values['societe_adh']);
         }
 
-       foreach ( $fields as $key ) {
+        foreach ( $fields as $key ) {
             //first of all, let's sanitize values
             $key = strtolower($key);
             $prop = '_' . $this->_fields[$key]['propname'];
@@ -877,8 +877,6 @@ class Adherent
 
                 // now, check validity
                 if ( $value != '' ) {
-					
-					
                     switch ( $key ) {
                     // dates
 					
