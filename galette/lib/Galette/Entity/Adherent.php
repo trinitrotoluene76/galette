@@ -785,37 +785,7 @@ class Adherent
         }
     }
 
-//--------------------------------------->
-//modification ajouté le 25/09/14 par Amaury Froment pour l'evol #43 interdiction doubons/homonymes
-
-
-	/**
-	 * Exécute une requête SQL pour trouver le profil doublon
-	 * Retourne true si doublon, false sinon
-	 * 
-	 * @param nouvel inscrit avec prenom, nom, date de naissance
-	 */
-	public function is_doublon($nom, $prenom, $ddn) 
-		{
-		global $zdb;
-		$result=false;
-		$ddn2 = \DateTime::createFromFormat('j/m/Y',$ddn);
-		$ddn2 = $ddn2->format('Y-m-d');
-		$select = new \Zend_Db_Select($zdb->db);
-		$select->from(PREFIX_DB . self::TABLE)
-			 ->where('nom_adh = ?', $nom)
-			 ->where('prenom_adh = ?', $prenom)
-			 ->where('ddn_adh = ?', $ddn2);
-		if ($select->query()->rowCount() > 0) 
-			{
-			$result=true;
-			}//fin du if
-			
-		return $result;
-		}//fin de la fonction
-//-------------------------------->fin de l'ajout d'Amaury
-					
-   /**
+    /**
      * Check posted values validity
      *
      * @param array $values   All values to check, basically the $_POST array
@@ -837,6 +807,31 @@ class Adherent
             unset($values['is_company']);
             unset($values['societe_adh']);
         }
+
+//--------------------------------------->
+//modification ajouté le 25/09/14 par Amaury Froment pour l'evol #43 interdiction doubons/homonymes
+	/**
+	 * Exécute une requête SQL pour trouver le profil doublon
+	 * Retourne une erreur si doublon, rien sinon
+	 * 
+	 * @param prenom, nom, date de naissance
+	 */
+	
+		{
+		$result=false;
+		$ddn2 = \DateTime::createFromFormat(_T("Y-m-d"),$values['ddn_adh']);
+		$ddn2 = $ddn2->format('Y-m-d');
+		$select = new \Zend_Db_Select($zdb->db);
+		$select->from(PREFIX_DB . self::TABLE)
+			 ->where('nom_adh = ?', $values['nom_adh'])
+			 ->where('prenom_adh = ?', $values['prenom_adh'])
+			 ->where('ddn_adh = ?', $ddn2);
+		if ($select->query()->rowCount() > 0) 
+			{
+			$errors[] = _T("- There is already the same name, first name and birthdate in the database");
+			}//fin du if
+		}//fin de la fonction
+//-------------------------------->fin de l'ajout d'Amaury
 
         foreach ( $fields as $key ) {
             //first of all, let's sanitize values
