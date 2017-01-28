@@ -6,45 +6,80 @@ nbproject
 /galette/build-stamp
 /galette/configure-stamp
 
-/galette/cache/*
-!/galette/cache/readme.txt
+/galette/data/cache/*
+!/galette/data/cache/readme.txt
+!/galette/data/cache/.htaccess
 
 .vimfiles*
+.exvim*
 *.vimentry
+*.exvim
 quick_gen_project_*
 
-# /galette/attachments/
-/galette/attachments/*
-!/galette/attachments/readme.txt
-!/galette/attachments/.htaccess
+# /galette/data/attachments/
+/galette/data/attachments/*
+!/galette/data/attachments/readme.txt
+!/galette/data/attachments/.htaccess
 
 # /galette/config/
 /galette/config/config.inc.php*
 !/galette/config/config.inc.php.dist
 /galette/config/local_*
 /galette/config/behavior.inc.php
+/tests/config/mysql/local_config.inc.php
+/tests/config/pgsql/local_config.inc.php
+
+# /galette/data/exports/
+/galette/data/exports/*
+!/galette/data/exports/readme.txt
+!/galette/data/exports/.htaccess
 
 # /galette/exports/
 /galette/exports/*
 !/galette/exports/readme.txt
 !/galette/exports/.htaccess
 
-# /galette/imports/
-/galette/imports/*
-!/galette/imports/readme.txt
-!/galette/imports/.htaccess
+# /galette/data/imports/
+/galette/data/imports/*
+!/galette/data/imports/readme.txt
+!/galette/data/imports/.htaccess
+
+# /galette/data/logs/
+/galette/data/logs/*.log
+!/galette/data/logs/readme.txt
+!/galette/data/logs/.htaccess
 
 # /galette/logs/
 /galette/logs/*.log
+!/galette/logs/readme.txt
+!/galette/logs/.htaccess
 
 # /galette/photos/
 /galette/photos/*
 !/galette/photos/readme.txt
 !/galette/photos/.htaccess
 
+# /galette/photos/
+/galette/data/photos/*
+!/galette/data/photos/readme.txt
+!/galette/data/photos/.htaccess
+
 # /galette/plugins/
 /galette/plugins/*
 !/galette/plugins/readme.txt
+
+# /galette/data/tempimages/
+/galette/data/tempimages/*.png
+/galette/data/tempimages/*.jpg
+/galette/data/tempimages/*.gif
+
+# /galette/data/templates_c/
+/galette/data/templates_c/*.php
+
+# /galette/data/files/
+/galette/data/files/*
+!/galette/data/files/readme.txt
+!/galette/data/files/.htaccess
 
 # /galette/tempimages/
 /galette/tempimages/*.png
@@ -53,6 +88,11 @@ quick_gen_project_*
 
 # /galette/templates_c/
 /galette/templates_c/*.php
+
+# /galette/files/
+/galette/files/*
+!/galette/files/readme.txt
+!/galette/files/.htaccess
 
 # Test stuff
 tests/coverage/
