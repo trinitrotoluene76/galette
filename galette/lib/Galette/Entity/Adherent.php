@@ -44,6 +44,7 @@ use Galette\Core\GaletteMail;
 use Galette\Core\Password;
 use Galette\Repository\Groups;
 use Galette\Repository\Members;
+use Galette\Filters\MembersList as MembersList;//#evol 55
 
 /**
  * Member class for galette
@@ -867,7 +868,39 @@ class Adherent
         }
     }
 
-    /**
+//--------------------------------------->
+//modification ajouté le 28/01/17 par Amaury Froment pour l'evol #43 interdiction doubons/homonymes
+//format Zend 2.3
+
+	/**
+	 * Exécute une requête SQL pour trouver le profil doublon
+	 * Retourne true si doublon, false sinon
+	 * 
+	 * @param nouvel inscrit avec prenom, nom, date de naissance
+	 */
+	public function is_doublon($nom, $prenom, $ddn) 
+		{
+		global $zdb;
+		$result=false;
+		$ddn2 = \DateTime::createFromFormat(_T("Y-m-d"),$ddn);
+		$ddn2 = $ddn2->format('Y-m-d');
+		$select = $zdb->select(self::TABLE);
+		$select->where(array(
+							'nom_adh'=>$nom,
+							'prenom_adh'=>$prenom,
+							'ddn_adh'=> $ddn2
+							 ));
+		$results=$zdb->execute($select);
+		if ($results->count() > 0) 
+			{
+			$result=true;
+			}//fin du if
+			
+		return $result;
+		}//fin de la fonction
+//-------------------------------->fin de l'ajout d'Amaury
+					
+   /**
      * Check posted values validity
      *
      * @param array $values   All values to check, basically the $_POST array
@@ -933,11 +966,14 @@ class Adherent
                 if ( $value !== null && $value != '' ) {
                     switch ( $key ) {
                     // dates
-                    case 'date_crea_adh':
-                    case 'ddn_adh':
-                        try {
+					
+					//--------------------------------------->
+					//modification ajouté le 12/07/14 par Amaury Froment pour corriger le bug sur les dates du type: 14/07/0014 + bug #38 date du jour
+					case 'date_crea_adh':
+					    try {
                             $d = \DateTime::createFromFormat(_T("Y-m-d"), $value);
-                            if ( $d === false ) {
+							
+							if ( $d === false ) {
                                 //try with non localized date
                                 $d = \DateTime::createFromFormat("Y-m-d", $value);
                                 if ( $d === false ) {
@@ -965,6 +1001,49 @@ class Adherent
                             );
                         }
                         break;
+                    case 'ddn_adh':
+                        try {
+                            $d = \DateTime::createFromFormat(_T("Y-m-d"), $value);
+							$birthdate= \DateTime::createFromFormat(_T("Y-m-d"),$value);
+							$today= new \DateTime("now");
+							$age=$birthdate->diff($today);
+							$age=$age->format('%Y');
+							if($age>200 || $age<1)
+								{
+								$d=false;
+								}
+									
+							
+							if ( $d === false ) {
+                                //try with non localized date
+                                $d = \DateTime::createFromFormat("Y-m-d", $value);
+                                if ( $d === false ) {
+                                    throw new \Exception('Incorrect format');
+                                }
+                            }
+                            $this->$prop = $d->format('Y-m-d');
+                        } catch (\Exception $e) {
+                            Analog::log(
+                                'Wrong date format. field: ' . $key .
+                                ', value: ' . $value . ', expected fmt: ' .
+                                _T("Y-m-d") . ' | ' . $e->getMessage(),
+                                Analog::INFO
+                            );
+                            $errors[] = str_replace(
+                                array(
+                                    '%date_format',
+                                    '%field'
+                                ),
+                                array(
+                                    _T("Y-m-d"),
+                                    $this->_fields[$key]['label']
+                                ),
+                                _T("- Wrong date format (%date_format) for %field!")
+                            );
+                        }
+                        break;
+					//-------------------------------->fin de l'ajout d'Amaury
+					
                     case 'titre_adh':
                         if ( $value !== null && $value !== '' ) {
                             if ( $value == '-1' ) {
@@ -1356,6 +1435,68 @@ class Adherent
             );
         }
     }
+
+//evol #55
+ /**
+     * Update member modification date (same function above but public)
+     *
+     * @return void
+     */
+    public function updateModificationDate()
+    {
+        global $zdb;
+
+        try {
+            $modif_date = date('Y-m-d');
+            $update = $zdb->update(self::TABLE);
+            $update->set(
+                array('date_modif_adh' => $modif_date)
+            )->where(self::PK . '=' . $this->_id);
+
+            $edit = $zdb->execute($update);
+            $this->_modification_date = $modif_date;
+        } catch (\Exception $e) {
+            Analog::log(
+                'Something went wrong updating modif date :\'( | ' .
+                $e->getMessage() . "\n" . $e->getTraceAsString(),
+                Analog::ERROR
+            );
+        }
+    }
+	//the function istaff is not reliable for manager or staff that are not member
+	//return $staff 0/1
+	public function isStaff2()
+    {
+	 $staff=false;
+	 
+	 $filters_staff = new MembersList();
+	 $members_staff = new Members($filters_staff);
+	 $members_list_staff = $members_staff->getStaffMembersList(1,null,0,0);
+	 $adherent_staff=new Adherent();
+	 foreach ( $members_list_staff as  $keystaff => $valuestaff ) 
+		{
+		$adherent_staff=$members_list_staff[$keystaff];
+		if($this->_id==$adherent_staff->_id)
+			{
+			$staff=true;
+			}
+		}
+		
+	
+	 $groups_for_managers=array();
+	 //$groups_for_managers=Groups::getList();
+	 $groups_for_managers=Groups::loadManagedGroups($this->_id);
+	
+		if(count($groups_for_managers)>0)
+			{
+			$staff=true;
+				
+			}	
+		
+		return $staff;
+    }
+	
+//fin evol #55
 
     /**
      * Global getter method
