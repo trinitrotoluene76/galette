@@ -105,7 +105,7 @@ if (isset($_POST['ident'])) {
     }
 }
 //Ligne rajouté par le pluggin subscription pour la détection du navigateur
-require_once GALETTE_BASE_PATH. "plugins/galette-plugin-subcription/includes/navigator_detection.php";
+require_once GALETTE_BASE_PATH. "/includes/navigator_detection.php";
 
 if ( !$login->isLogged() ) {
     // display page
