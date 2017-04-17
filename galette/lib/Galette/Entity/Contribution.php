@@ -165,8 +165,7 @@ class Contribution
                 }
                 $this->_amount = $this->_transaction->getMissingAmount();
             }
-            $this->_type = new ContributionsTypes((int)$args['type']);
-            $this->_is_cotis = (bool)$this->_type->extension;
+            $this->type = (int)$args['type'];
             //calculate begin date for cotisation
             $this->_begin_date = $this->_date;
             if ( $this->_is_cotis ) {
@@ -296,12 +295,7 @@ class Contribution
             $this->_transaction = new Transaction((int)$r->$transpk);
         }
 
-        $this->_type = new ContributionsTypes((int)$r->id_type_cotis);
-        if ( $this->_type->extension == 1 ) {
-            $this->_is_cotis = true;
-        } else {
-            $this->_is_cotis = false;
-        }
+        $this->type = (int)$r->id_type_cotis;
     }
 
     /**
@@ -377,7 +371,7 @@ class Contribution
                     break;
                 case ContributionsTypes::PK:
                     if ( $value != '' ) {
-                        $this->_type = new ContributionsTypes((int)$value);
+                        $this->type = (int)$value;
                     }
                     break;
                 case 'montant_cotis':
@@ -495,7 +489,7 @@ class Contribution
 
             $results = $zdb->execute($select);
             $result = $results->current();
-            if ( $result !== false ) {
+            if ( $result ) {
                 $d = new \DateTime($result->date_debut_cotis);
 
                 return _T("- Membership period overlaps period starting at ") .
