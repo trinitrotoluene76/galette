@@ -8,6 +8,8 @@
         <a id="next" href="{if isset($navigate.next)}{path_for name="member" data=["id" => $navigate.next]}{else}#{/if}" class="button{if !isset($navigate.next)} selected{/if}">{_T string="Next"}</a>
     </nav>
 {/if}
+    <div class="bigtable">
+        <div id="member_stateofdue" class="{$member->getRowClass()}">{$member->getDues()}</div>
         <ul id="details_menu">
 {if ($pref_card_self eq 1) or ($login->isAdmin() or $login->isStaff())}
             <li>
@@ -18,7 +20,7 @@
             </li>
     {if $pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_DISABLED') && ($login->isAdmin() || $login->isStaff())}
             <li>
-                <a class="button" href="lostpasswd.php?id_adh={$member->id}" id="btn_lostpassword" title="{_T string="Send member a link to generate a new passord, as if had used the 'lost password' functionnality."}">{_T string="New password"}</a>
+                <a class="button" href="{path_for name="retrieve-pass" data=["id_adh" => $member->id]}" id="btn_lostpassword" title="{_T string="Send member a link to generate a new passord, as if had used the 'lost password' functionnality."}">{_T string="New password"}</a>
             </li>
     {/if}
 {/if}
@@ -45,8 +47,6 @@ We have to use a template file, so Smarty will do its work (like replacing varia
 {/if}
 
         </ul>
-    <div class="bigtable wrmenu">
-        <div id="member_stateofdue" class="{$member->getRowClass()}">{$member->getDues()}</div>
 {if $member->hasParent() or $member->hasChildren()}
         <table class="details">
             <caption class="ui-state-active ui-corner-top">{_T string="Family"}</caption>
@@ -139,7 +139,7 @@ We have to use a template file, so Smarty will do its work (like replacing varia
                 <td>
     {foreach from=$groups item=group key=kgroup}
         {if $member->isGroupMember($group) or $member->isGroupManager($group)}
-                    <a href="{if $login->isGroupManager($kgroup)}gestion_groupes.php?id_group={$kgroup}{else}#{/if}" class="button group-btn{if not $login->isGroupManager($kgroup)} notmanaged{/if}">
+                    <a href="{if $login->isGroupManager($kgroup)}{path_for name="groups" data=["id" => $kgroup]}{else}#{/if}" class="button group-btn{if not $login->isGroupManager($kgroup)} notmanaged{/if}">
                         {$group}
             {if $member->isGroupMember($group)}
                         <img src="{base_url}/{$template_subdir}images/icon-user.png" alt="{_T string="[member]"}" width="16" height="16"/>

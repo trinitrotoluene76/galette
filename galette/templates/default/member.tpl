@@ -8,7 +8,7 @@
         <a id="next" href="{if isset($navigate.next)}{path_for name="editmember" data=["action" => {_T string="edit" domain="routes"}, "id" => $navigate.next]}{else}#{/if}" class="button{if !isset($navigate.next)} selected{/if}">{_T string="Next"}</a>
     </nav>
 {/if}
-        <form action="{path_for name="storemembers"}" method="post" enctype="multipart/form-data" id="form">
+        <form action="{if $self_adh}{path_for name="storemembers" data=["self" => {_T string="subscribe" domain="routes"}]}{else}{path_for name="storemembers"}{/if}" method="post" enctype="multipart/form-data" id="form">
         <div class="bigtable">
 {if $self_adh and $head_redirect}
             <div id="infobox">
@@ -204,7 +204,7 @@
                     {assign var="checked" value=null}
                     {assign var="example" value=null}
 
-                    {if $value neq ''}
+                    {if $value neq '' or $entry->field_id eq 'parent_id'}
                         {include
                             file="forms_types/hidden.tpl"
                             name=$entry->field_id
@@ -268,7 +268,7 @@
                         };
                     });
                     $.ajax({
-                        url: 'ajax_groups.php',
+                        url: '{path_for name="ajax_groups"}',
                         type: "POST",
                         data: {
                             ajax: true,
@@ -299,6 +299,14 @@
                         height: 500,
                         close: function(event, ui){
                             _el.remove();
+                        },
+                        create: function (event, ui) {
+                            if ($(window ).width() < 767) {
+                                $(this).dialog('option', {
+                                        'width': '95%',
+                                        'draggable': false
+                                });
+                            }
                         }
                     });
                     _groups_ajax_mapper(res, _groups, _managed);
@@ -311,7 +319,14 @@
                         var _form = (_managed) ? 'managed' : 'user';
                         $('#' + _form + 'groups_form').empty();
                         var _groups = new Array();
-                        var _groups_str = '';
+                        var _groups_str = '<br/><strong>';
+                        if ( _managed ) {
+                            _groups_str += '{_T string="Manager for:" escape="js"}';
+                        } else {
+                            _groups_str += '{_T string="Member of:" escape="js"}';
+                        }
+                        _groups_str += '</strong> ';
+
                         $('li[id^="group_"]').each(function(){
                             //get group values
                             _gid = this.id.substring(6, this.id.length);
@@ -323,14 +338,10 @@
                                 _gid + '|' + _gname + '|' +
                                 '" name="' + _iname + '[]">'
                             );
-                            if ( _groups_str != '' ) {
+                            if ( _groups.length > 1 ) {
                                 _groups_str += ', ';
                             }
-                            if ( _managed ) {
-                                _groups_str += '{_T string="Manager for '%groupname'" escape="js"}'.replace(/%groupname/, _gname);
-                            } else {
-                                _groups_str += '{_T string="Member of '%groupname'" escape="js"}'.replace(/%groupname/, _gname);
-                            }
+                            _groups_str += _gname;
                         });
                         $('#' + _form + 'groups').html(_groups_str);
                         $('#ajax_groups_list').dialog("close");
@@ -346,8 +357,9 @@
                             $('#selected_groups ul').append(_none);
                         }
                     });
-                    $('#listing a').click(function(){
-                        var _gid = this.href.substring(this.href.indexOf('?')+10);
+                    $('#listing a').click(function(e){
+                        e.preventDefault();
+                        var _gid = this.href.match(/.*\/(\d+)$/)[1];
                         var _gname = $(this).text();
                         $('#none_selected').remove()
                         if ( $('#group_' + _gid).length == 0 ) {
@@ -374,11 +386,9 @@
                             return $(this).val();
                         }).get();
                         $.ajax({
-                            url: 'ajax_members.php',
+                            url: '{path_for name="ajaxMembers"}',
                             type: "POST",
                             data: {
-                                ajax: true,
-                                multiple: false,
                                 from: 'attach',
                                 id_adh: {if isset($member->id) and $member->id neq ''}{$member->id}{else}'new'{/if}
                             },
@@ -405,6 +415,14 @@
                         height: 400,
                         close: function(event, ui){
                             _el.remove();
+                        },
+                        create: function (event, ui) {
+                            if ($(window ).width() < 767) {
+                                $(this).dialog('option', {
+                                        'width': '95%',
+                                        'draggable': false
+                                });
+                            }
                         }
                     });
                     _members_ajax_mapper(res);
@@ -416,7 +434,7 @@
 
                     $('#members_list tbody').find('a').each(function(){
                         $(this).click(function(){
-                            var _id = this.href.substring(this.href.indexOf('id_adh=') + 7, this.href.length);
+                            var _id = this.href.match(/.*\/(\d+)$/)[1];
                             $('#parent_id').attr('value', _id);
                             var _parent_name;
                             if ($('#parent_name').length > 0) {
@@ -436,18 +454,14 @@
                     });
                     //Remap links
                     $('#members_list .pages a').click(function(){
-                        var _page = this.href.substring(this.href.indexOf('?')+6);
                         var gid = $('#the_id').val();
 
                         $.ajax({
-                            url: 'ajax_members.php',
+                            url: this.href,
                             type: "POST",
                             data: {
-                                ajax: true,
                                 from: 'attach',
-                                multiple: false,
-                                id_adh: {if isset($member->id) and $member->id neq ''}{$member->id}{else}'new'{/if},
-                                page: _page,
+                                id_adh: {if isset($member->id) and $member->id neq ''}{$member->id}{else}'new'{/if}
                             },
                             {include file="js_loader.tpl"},
                             success: function(res){

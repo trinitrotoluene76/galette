@@ -53,6 +53,7 @@ use Galette\Core\Picture;
 use Galette\Entity\Group;
 use Galette\Repository\Groups;
 use Galette\Entity\Status;
+use Galette\Core\Db;
 
 /**
  * Members class for galette
@@ -389,7 +390,7 @@ class Members
             //not numeric and not an array: incorrect.
             Analog::log(
                 'Asking to remove members, but without providing an array or a single numeric value.',
-                Analog::WARNING
+                Analog::ERROR
             );
             return false;
         }
@@ -567,6 +568,7 @@ class Members
                             : $fields) : (array)'*';
 
             $select = $zdb->select(self::TABLE, 'a');
+
             $select->columns($fieldsList);
 
             $select->quantifier('DISTINCT');
@@ -801,9 +803,6 @@ class Members
             if ($count) {
                 $this->proceedCount($select);
             }
-
-            //Fix for #687, but only for MySQL (break on PostgreSQL)
-            //$select->group('a.' . Adherent::PK);
 
             return $select;
         } catch (\Exception $e) {
@@ -1106,12 +1105,12 @@ class Members
                 $select->join(
                     array('g' => PREFIX_DB . Group::GROUPSUSERS_TABLE),
                     'a.' . Adherent::PK . '=g.' . Adherent::PK,
-                    array('*'),
+                    array(),
                     $select::JOIN_LEFT
                 )->join(
                     array('gs' => PREFIX_DB . Group::TABLE),
                     'gs.' . Group::PK . '=g.' . Group::PK,
-                    array('*'),
+                    array(),
                     $select::JOIN_LEFT
                 )->where(
                     '(g.' . Group::PK . ' = ' . $this->filters->group_filter .
@@ -1413,7 +1412,7 @@ class Members
                         if ($fs['log_op'] === AdvancedMembersList::OP_AND) {
                             $select->where($qry);
                         } elseif ($fs['log_op'] === AdvancedMembersList::OP_OR) {
-                            $select->orWhere($qry);
+                            $select->where($qry, PredicateSet::OP_OR);
                         }
                     }
                 }
@@ -1607,5 +1606,28 @@ class Members
     public function getErrors()
     {
         return $this->errors;
+    }
+
+    /**
+     * Get all existing emails
+     *
+     * @param Db $zdb Database instance
+     *
+     * @return array ['email' => 'id_adh']
+     */
+    public static function getEmails(Db $zdb)
+    {
+        $emails = [];
+        $select = $zdb->select(self::TABLE);
+        $select->columns([
+            self::PK,
+            'email_adh'
+        ]);
+        $select->where('email_adh != \'\' AND email_adh IS NOT NULL');
+        $rows = $zdb->execute($select);
+        foreach ($rows as $row) {
+            $emails[$row->email_adh] = $row->{self::PK};
+        }
+        return $emails;
     }
 }

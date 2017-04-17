@@ -25,18 +25,18 @@
                         <tbody>
     {foreach item=import from=$existing name=existing_list}
                             <tr class="{if $smarty.foreach.existing_list.iteration % 2 eq 0}even{else}odd{/if}">
-                                <td>
+                                <td data-scope="row">
                                     <input type="radio" name="import_file" id="file{$smarty.foreach.existing_list.iteration}" value="{$import.name}"{if isset($import_file) and $import_file eq $import.name} checked="checked"{/if}/>
                                     <label for="file{$smarty.foreach.existing_list.iteration}">{$import.name}</label> (<a href="{path_for name="getCsv" data=["type" => {_T string="import" domain="routes"}, "file" => $import.name]}">{_T string="see"}</a>)
                                 </td>
-                                <td>
+                                <td data-title="{_T string="Date"}">
                                     {$import.date}
                                 </td>
-                                <td>
+                                <td data-title="{_T string="Size"}">
                                     {$import.size}
                                 </td>
                                 <td class="actions_row">
-                                    <a href="{path_for name="removeCsv" data=["type" => {_T string="import" domain="routes"}, "file" => $import.name]}" title="{_T string="Remove '%file' from disk" pattern="/%file/" replace=$import.name}"><img src="{$template_subdir}images/delete.png" alt="{_T string="Delete"}"/></a>
+                                    <a class="delete" href="{path_for name="removeCsv" data=["type" => {_T string="import" domain="routes"}, "file" => $import.name]}" title="{_T string="Remove '%file' from disk" pattern="/%file/" replace=$import.name}"><img src="{$template_subdir}images/delete.png" alt="{_T string="Delete"}"/></a>
                                 </td>
                             </tr>
     {/foreach}
@@ -115,5 +115,6 @@
                     }
                 });
             });
+            {include file="js_removal.tpl"}
         </script>
 {/block}

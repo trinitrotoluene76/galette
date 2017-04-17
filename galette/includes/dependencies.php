@@ -36,6 +36,22 @@
 $container = $app->getContainer();
 
 // -----------------------------------------------------------------------------
+// Error handling
+// -----------------------------------------------------------------------------
+
+$container['errorHandler'] = function ($c) {
+    return new Galette\Handlers\Error($c['view'], true);
+};
+
+$container['phpErrorHandler'] = function ($c) {
+    return new Galette\Handlers\PhpError($c['view'], true);
+};
+
+$container['notFoundHandler'] = function ($c) {
+    return new Galette\Handlers\NotFound($c['view']);
+};
+
+// -----------------------------------------------------------------------------
 // Service providers
 // -----------------------------------------------------------------------------
 
@@ -73,17 +89,18 @@ $container['view'] = function ($c) {
         'plugin_detailled_actions',
         $c->plugins->getTplAdhDetailledActions()
     );
-    $smarty->assign('jquery_dir', 'js/jquery/');
+    $smarty->assign('jquery_dir', GALETTE_BASE_PATH . 'js/jquery/');
     $smarty->assign('jquery_version', JQUERY_VERSION);
     $smarty->assign('jquery_migrate_version', JQUERY_MIGRATE_VERSION);
     $smarty->assign('jquery_ui_version', JQUERY_UI_VERSION);
     $smarty->assign('jquery_markitup_version', JQUERY_MARKITUP_VERSION);
     $smarty->assign('jquery_jqplot_version', JQUERY_JQPLOT_VERSION);
-    $smarty->assign('scripts_dir', 'js/');
+    $smarty->assign('scripts_dir', GALETTE_BASE_PATH . 'js/');
     $smarty->assign('PAGENAME', basename($_SERVER['SCRIPT_NAME']));
     $smarty->assign('galette_base_path', './');
     $smarty->assign('GALETTE_VERSION', GALETTE_VERSION);
     $smarty->assign('GALETTE_MODE', GALETTE_MODE);
+    $smarty->assign('GALETTE_DISPLAY_ERRORS', GALETTE_DISPLAY_ERRORS);
 
     /*if ($this->parserConfigDir) {
         $instance->setConfigDir($this->parserConfigDir);
@@ -138,7 +155,12 @@ $container['plugins'] = function ($c) use ($app) {
 };
 
 $container['i18n'] = function ($c) {
-    return new Galette\Core\I18n();
+    $i18n = $c->get('session')->i18n;
+    if (!$i18n || !$i18n->getId()) {
+        $i18n = new Galette\Core\I18n();
+        $c->get('session')->i18n = $i18n;
+    }
+    return $i18n;
 };
 
 $container['zdb'] = function ($c) {
@@ -189,10 +211,13 @@ $container['acls'] = function ($c) {
     $acls = [
         'preferences'       => 'admin',
         'store-preferences' => 'admin',
+        'testEmail'         => 'admin',
         'dashboard'         => 'groupmanager',
         'sysinfos'          => 'staff',
         'charts'            => 'staff',
         'plugins'           => 'admin',
+        'pluginInitDb'      => 'admin',
+        'pluginsActivation' => 'admin',
         'history'           => 'staff',
         'history_filter'    => 'staff',
         'flushHistory'      => 'staff',
@@ -202,7 +227,10 @@ $container['acls'] = function ($c) {
         'advanced-search'   => 'groupmanager',
         'batch-memberslist' => 'groupmanager',
         'mailing'           => 'staff',
+        'doMailing'         => 'staff',
         'mailingPreview'    => 'staff',
+        'previewAttachment' => 'staff',
+        'mailingRecipients' => 'staff',
         'csv-memberslist'   => 'staff',
         'groups'            => 'groupmanager',
         'me'                => 'member',
@@ -213,11 +241,10 @@ $container['acls'] = function ($c) {
         'mailings_filter'   => 'staff',
         'removeMailing'     => 'staff',
         'doRemoveMailing'   => 'staff',
-        'contributions'     => 'staff',
+        'contributions'     => 'member',
         'transactions'      => 'staff',
         'payments_filter'   => 'member',
         'editmember'        => 'member',
-        'storemembers'      => 'member',
         'impersonate'       => 'superadmin',
         'unimpersonate'     => 'member',
         'reminders'         => 'staff',
@@ -240,6 +267,7 @@ $container['acls'] = function ($c) {
         'doRemoveTitle'     => 'staff',
         'editTitle'         => 'staff',
         'texts'             => 'staff',
+        'changeText'        => 'staff',
         'transaction'       => 'staff',
         'doEditTransaction' => 'staff',
         'contribution'      => 'staff',
@@ -251,18 +279,21 @@ $container['acls'] = function ($c) {
         'doRemoveEntitled'  => 'staff',
         'dynamicTranslations'       => 'staff',
         'editDynamicTranslation'    => 'staff',
+        'printContribution'         => 'staff',
         'attach_contribution'       => 'staff',
         'detach_contribution'       => 'staff',
         'removeContributions'       => 'staff',
         'pdf_groups'                => 'groupmanager',
         'ajax_group'                => 'groupmanager',
-        'ajax_groupname_unique'     => 'staff',
+        'ajax_groups'               => 'groupmanager',
+        'ajax_groupname_unique'     => 'groupmanager',
         'add_group'                 => 'staff',
         'removeGroup'               => 'staff',
         'doRemoveGroup'             => 'staff',
-        'doEditGroup'               => 'staff',
-        'adhesionForm'              => 'staff',
+        'doEditGroup'               => 'groupmanager',
+        'adhesionForm'              => 'member',
         'removeMember'              => 'staff',
+        'removeMembers'             => 'staff',
         'doRemoveMember'            => 'staff',
         'doRemoveContribution'      => 'staff',
         'configureCoreFields'       => 'admin',
@@ -273,8 +304,17 @@ $container['acls'] = function ($c) {
         'moveDynamicField'          => 'admin',
         'removeDynamicField'        => 'admin',
         'doRemoveDynamicField'      => 'admin',
-        'photoDnd'                  => 'staff'
+        'photoDnd'                  => 'staff',
+        'ajaxMembers'               => 'groupmanager',
+        'ajaxGroupMembers'          => 'staff',
+        'getDynamicFile'            => 'staff',
+        'fakeData'                  => 'superadmin',
+        'doFakeData'                => 'superadmin'
     ];
+
+    foreach ($c['plugins']->getModules() as $plugin) {
+        $acls[$plugin['route'] . 'Info'] = 'member';
+    }
 
     //load user defined ACLs
     if (file_exists(GALETTE_CONFIG_PATH  . 'local_acls.inc.php')) {
@@ -339,24 +379,6 @@ $container['App\Action\HomeAction'] = function ($c) {
 $hist = $container['history'];
 $login = $container['login'];
 $zdb = $container['zdb'];
+$i18n = $container['i18n'];
 
-/**
- * Language instantiation
- */
-if (isset($session['lang'])) {
-    $i18n = unserialize($session['lang']);
-} else {
-    $i18n = new Galette\Core\I18n();
-}
-
-if (isset($_POST['pref_lang'])
-    && (strpos($_SERVER['PHP_SELF'], 'self_adherent.php') !== false
-    || strpos($_SERVER['PHP_SELF'], 'install/index.php') !== false)
-) {
-    $_GET['pref_lang'] = $_POST['pref_lang'];
-}
-if (isset($_GET['pref_lang'])) {
-    $i18n->changeLanguage($_GET['pref_lang']);
-}
-$session['lang'] = serialize($i18n);
 require_once GALETTE_ROOT . 'includes/i18n.inc.php';

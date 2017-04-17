@@ -1,11 +1,11 @@
 {extends file="public_page.tpl"}
 
 {block name="content"}
+    <div class="error">
     <div id="errorbox">
         <h2>{_T string="Application error"}</h2>
-        <p>{$exception->getMessage() }</p>
     </div>
-    {if $login->isLogged() and $login->isAdmin() or $GALETTE_MODE eq 'DEV'}
+    {if $login->isLogged() and $login->isAdmin() and $GALETTE_DISPLAY_ERRORS eq 1 or $GALETTE_MODE eq 'DEV'}
         {function name=render_ex}
     <div>
         <h3>{_T string="Details"}</h3>
@@ -40,6 +40,7 @@
         {/function}
 
         {call render_ex exception=$exception}
+    </div>
     </div>
     {/if}
 {/block}

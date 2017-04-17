@@ -68,13 +68,15 @@ class Error
     {
         $str = 'PHP %type: %str in %file on line %line';
         $patterns = array('%type', '%str', '%file', '%line');
+        $throw = false;
 
         switch ($errno) {
             case E_STRICT:
+                $type = 'Strict standards';
                 Analog::log(
                     str_replace(
                         $patterns,
-                        array('Strict standards', $errstr, $errfile, $errline),
+                        array($type, $errstr, $errfile, $errline),
                         $str
                     ),
                     Analog::NOTICE
@@ -82,10 +84,11 @@ class Error
                 break;
             case E_DEPRECATED:
             case E_USER_DEPRECATED:
+                $type = 'Deprecated';
                 Analog::log(
                     str_replace(
                         $patterns,
-                        array('Deprecated', $errstr, $errfile, $errline),
+                        array($type, $errstr, $errfile, $errline),
                         $str
                     ),
                     Analog::NOTICE
@@ -97,22 +100,26 @@ class Error
                 if (!preg_match('/^Undefined index/', $errstr)
                     && !preg_match('/\.tpl\.php$/', $errfile)
                 ) {
+                    $type = 'Notice';
                     Analog::log(
                         str_replace(
                             $patterns,
-                            array('Notice', $errstr, $errfile, $errline),
+                            array($type, $errstr, $errfile, $errline),
                             $str
                         ),
                         Analog::NOTICE
                     );
+                } else {
+                    $throw = null;
                 }
                 break;
             case E_WARNING:
             case E_USER_WARNING:
+                $type = 'Warning';
                 Analog::log(
                     str_replace(
                         $patterns,
-                        array('Warning', $errstr, $errfile, $errline),
+                        array($type, $errstr, $errfile, $errline),
                         $str
                     ),
                     Analog::WARNING
@@ -120,39 +127,39 @@ class Error
                 break;
             case E_ERROR:
             case E_USER_ERROR:
+                $type = 'Fatal';
                 Analog::log(
                     str_replace(
                         $patterns,
-                        array('Fatal', $errstr, $errfile, $errline),
+                        array($type, $errstr, $errfile, $errline),
                         $str
                     ),
                     Analog::ERROR
                 );
-                throw new \ErrorException(
-                    'Fatal error: ' . $errstr,
-                    $errno,
-                    1,
-                    $errfile,
-                    $errline
-                );
-
-                exit("FATAL error $errstr at $errfile:$errline");
+                $throw = true;
+                break;
             default:
+                $type = 'Unknown';
                 Analog::log(
                     str_replace(
                         $patterns,
-                        array('Unknown', $errstr, $errfile, $errline),
+                        array($type, $errstr, $errfile, $errline),
                         $str
                     ),
                     Analog::ERROR
                 );
-                throw new \ErrorException(
-                    'Unknown error: ' . $errstr,
-                    $errno,
-                    1,
-                    $errfile,
-                    $errline
-                );
+                $throw = true;
+                break;
+        }
+
+        if ($throw === true || GALETTE_MODE == 'DEV' && $throw !== null) {
+            throw new \ErrorException(
+                $type . ': ' . $errstr,
+                $errno,
+                1,
+                $errfile,
+                $errline
+            );
         }
     }
 }

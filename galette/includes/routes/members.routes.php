@@ -56,6 +56,8 @@ use Galette\Repository\Titles;
 use Galette\Entity\Texts;
 use Galette\IO\Pdf;
 use Galette\Core\MailingHistory;
+use Galette\Entity\Group;
+use Galette\IO\File;
 
 //self subscription
 $app->get(
@@ -69,7 +71,13 @@ $app->get(
 
         $dyn_fields = new DynamicFields();
 
-        $member = new Adherent($this->zdb);
+        if ($this->session->member !== null) {
+            $member = $this->session->member;
+            $this->session->member = null;
+        } else {
+            $member = new Adherent($this->zdb);
+        }
+
         //mark as self membership
         $member->setSelfMembership();
 
@@ -107,40 +115,30 @@ $app->get(
             1
         );
 
-        /*if ( $has_register ) {
-            $tpl->assign('has_register', $has_register);
-        }
-        if ( isset($head_redirect) ) {
-            $tpl->assign('head_redirect', $head_redirect);
-        }*/
-        // /self_adh specific
-
         // display page
         $this->view->render(
             $response,
             'member.tpl',
-            array_merge(
-                $route_params,
-                array(
-                    'page_title'        => _T("Subscription"),
-                    'parent_tpl'        => 'public_page.tpl',
-                    'required'          => $required,
-                    'visibles'          => $visibles,
-                    'disabled'          => $disabled,
-                    'member'            => $member,
-                    'self_adh'          => true,
-                    'dynamic_fields'    => $dynamic_fields,
-                    'languages'         => $this->i18n->getList(),
-                    'require_calendar'  => true,
-                    // pseudo random int
-                    'time'              => time(),
-                    'titles_list'       => Titles::getList($zdb),
-                    //self_adh specific
-                    'spam_pass'         => $spam_pass,
-                    'spam_img'          => $spam_img,
-                    'fieldsets'         => $form_elements['fieldsets'],
-                    'hidden_elements'   => $form_elements['hiddens']
-                )
+            array(
+                'page_title'        => _T("Subscription"),
+                'parent_tpl'        => 'public_page.tpl',
+                'required'          => $required,
+                'visibles'          => $visibles,
+                'disabled'          => $disabled,
+                'member'            => $member,
+                'self_adh'          => true,
+                'dynamic_fields'    => $dynamic_fields,
+                'languages'         => $this->i18n->getList(),
+                'require_calendar'  => true,
+                'autocomplete'      => true,
+                // pseudo random int
+                'time'              => time(),
+                'titles_list'       => Titles::getList($this->zdb),
+                //self_adh specific
+                'spam_pass'         => $spam_pass,
+                'spam_img'          => $spam_img,
+                'fieldsets'         => $form_elements['fieldsets'],
+                'hidden_elements'   => $form_elements['hiddens']
             )
         );
         return $response;
@@ -324,7 +322,8 @@ $app->get(
                 $filename .'` that does not exists.',
                 Analog::WARNING
             );
-            $response->setStatus(404);
+            $notFound = $this->notFoundHandler;
+            return $notFound($request, $response);
         }
     }
 )->setName('csv-memberslist')->add($authenticate);
@@ -546,19 +545,56 @@ $app->get(
                 ->withStatus(301)
                 ->withHeader('Location', $this->router->pathFor('slash'));
         }
+        $dyn_fields = new DynamicFields();
         $deps = array(
-            'picture'   => false,
-            'groups'    => false,
-            'dues'      => false
+            'picture'   => true,
+            'groups'    => true,
+            'dues'      => true,
+            'parent'    => true,
+            'children'  => true
         );
-        $member = new Adherent($this->zdb, $this->login->login, $deps);
 
-        return $response
-            ->withStatus(301)
-            ->withHeader(
-                'Location',
-                $this->router->pathFor('member', ['id' => $member->id])
-            );
+        $member = new Adherent($this->zdb, $this->login->login, $deps);
+        $id = $member->id;
+        var_dump($id);
+
+        // declare dynamic field values
+        $adherent['dyn'] = $dyn_fields->getFields('adh', $id, true);
+
+        // - declare dynamic fields for display
+        $disabled['dyn'] = array();
+        $dynamic_fields = $dyn_fields->prepareForDisplay(
+            'adh',
+            $adherent['dyn'],
+            $disabled['dyn'],
+            0
+        );
+
+        // flagging fields visibility
+        $fc = $this->fields_config;
+        $visibles = $fc->getVisibilities();
+
+        $display_elements = $fc->getDisplayElements($this->login);
+
+        // display page
+        $this->view->render(
+            $response,
+            'voir_adherent.tpl',
+            array(
+                'page_title'        => _T("Member Profile"),
+                'require_dialog'    => true,
+                'member'            => $member,
+                'data'              => $adherent,
+                'pref_lang_img'     => $this->i18n->getFlagFromId($member->language),
+                'pref_lang'         => ucfirst($this->i18n->getNameFromId($member->language)),
+                'pref_card_self'    => $this->preferences->pref_card_self,
+                'dynamic_fields'    => $dynamic_fields,
+                'groups'            => Groups::getSimpleList(),
+                'time'              => time(),
+                'visibles'          => $visibles,
+                'display_elements'  => $display_elements
+            )
+        );
     }
 )->setName('me')->add($authenticate);
 
@@ -616,10 +652,9 @@ $app->get(
             $filters = new MembersList();
         }
 
-        if (($this->login->isAdmin()
+        if ($this->login->isAdmin()
             || $this->login->isStaff()
-            || $this->login->isGroupManager())
-            && count($filters) > 0
+            || $this->login->isGroupManager()
         ) {
             $m = new Members($filters);
             $ids = $m->getList(false, array(Adherent::PK, 'nom_adh', 'prenom_adh'));
@@ -642,9 +677,6 @@ $app->get(
             }
         }
 
-        //Set caller page ref for cards error reporting
-        //$this->session->caller = 'voir_adherent.php?id_adh='.$id_adh;
-
         // declare dynamic field values
         $adherent['dyn'] = $dyn_fields->getFields('adh', $id, true);
 
@@ -656,18 +688,6 @@ $app->get(
             $disabled['dyn'],
             0
         );
-
-        //if we got a mail warning when adding/editing a member,
-        //we show it and delete it from session
-        /*if ( isset($this->session['mail_warning']) ) {
-            $warning_detected[] = $this->session['mail_warning'];
-            unset($this->session['mail_warning']);
-        }
-        $tpl->assign('warning_detected', $warning_detected);
-        if ( isset($this->session['account_success']) ) {
-            $success_detected = unserialize($this->session['account_success']);
-            unset($this->session['account_success']);
-        }*/
 
         // flagging fields visibility
         $fc = $this->fields_config;
@@ -791,6 +811,11 @@ $app->get(
         // flagging required fields
         $fc = $this->fields_config;
 
+        // password required if we create a new member
+        if ($member->id != '') {
+            $fc->setNotRequired('mdp_adh');
+        }
+
         //address and mail fields are not required if member has a parent
         $no_parent_required = array(
             'adresse_adh',
@@ -877,11 +902,6 @@ $app->get(
             }
         }
 
-        if (isset($this->session->mail_warning)) {
-            //warning will be showed here, no need to keep it longer into session
-            unset($this->session->mail_warning);
-        }
-
         //Status
         $statuts = new Status($this->zdb);
 
@@ -901,6 +921,7 @@ $app->get(
                     'parent_tpl'        => 'page.tpl',
                     'navigate'          => $navigate,
                     'require_dialog'    => true,
+                    'autocomplete'      => true,
                     'page_title'        => $title,
                     'required'          => $required,
                     'visibles'          => $visibles,
@@ -928,8 +949,14 @@ $app->get(
 )->add($authenticate);
 
 $app->post(
-    __('/member/store', 'routes'),
-    function ($request, $response) {
+    __('/member/store', 'routes') . '[/{self:' . __('subscribe', 'routes') . '}]',
+    function ($request, $response, $args) {
+        if (!$this->preferences->pref_bool_selfsubscribe && !$this->login->isLogged()) {
+            return $response
+                ->withStatus(301)
+                ->withHeader('Location', $this->router->pathFor('slash'));
+        }
+
         $deps = array(
             'picture'   => true,
             'groups'    => true,
@@ -943,6 +970,11 @@ $app->post(
             $this->members_fields,
             $this->history
         );
+        if (isset($args['self'])) {
+            //mark as self membership
+            $member->setSelfMembership();
+        }
+
         //TODO: dynamic fields should be handled by Adherent object
         $dyn_fields = new DynamicFields();
         $success_detected = [];
@@ -1048,7 +1080,14 @@ $app->post(
                 if ($store === true) {
                     //member has been stored :)
                     if ($new) {
-                        $success_detected[] = _T("New member has been successfully added.");
+                        if (isset($args['self'])) {
+                            $success_detected[] = _T("Your account has been created!");
+                            if ($this->preferences->pref_mail_method > GaletteMail::METHOD_DISABLED && $member->getEmail() != '') {
+                                $success_detected[] = _T("An email has been sent to you, check your inbox.");
+                            }
+                        } else {
+                            $success_detected[] = _T("New member has been successfully added.");
+                        }
                         //Send email to admin if preference checked
                         if ($this->preferences->pref_mail_method > GaletteMail::METHOD_DISABLED
                             && $this->preferences->pref_bool_mailadh
@@ -1056,6 +1095,7 @@ $app->post(
                             $texts = new Texts(
                                 $this->texts_fields,
                                 $this->preferences,
+                                $this->router,
                                 array(
                                     'name_adh'      => custom_html_entity_decode(
                                         $member->sname
@@ -1080,14 +1120,14 @@ $app->post(
                             $mail->setSubject($texts->getSubject());
                             $mail->setRecipients(
                                 array(
-                                    $this->preferences->pref_email_newadh => 'Galette admin'
+                                    $this->preferences->pref_email_newadh => _T("Galette admin")
                                 )
                             );
                             $mail->setMessage($texts->getBody());
                             $sent = $mail->send();
 
                             if ($sent == GaletteMail::MAIL_SENT) {
-                                $hist->add(
+                                $this->history->add(
                                     str_replace(
                                         '%s',
                                         $member->sname . ' (' . $member->email . ')',
@@ -1100,8 +1140,8 @@ $app->post(
                                     $member->sname . ' (' . $member->email . ')',
                                     _T("A problem happened while sending email to admin for account '%s'.")
                                 );
-                                $hist->add($str);
-                                $error_detected[] = $str;
+                                $this->history->add($str);
+                                $warning_detected[] = $str;
                             }
                             unset($texts);
                         }
@@ -1110,9 +1150,9 @@ $app->post(
                     }
 
                     // send mail to member
-                    if (isset($_POST['mail_confirm']) && $_POST['mail_confirm'] == '1') {
+                    if (isset($args['self']) || isset($_POST['mail_confirm']) && $_POST['mail_confirm'] == '1') {
                         if ($this->preferences->pref_mail_method > GaletteMail::METHOD_DISABLED) {
-                            if ($member->getEmail() == '') {
+                            if ($member->getEmail() == '' && !isset($args['self'])) {
                                 $error_detected[] = _T("- You can't send a confirmation by email if the member hasn't got an address!");
                             } else {
                                 //send mail to member
@@ -1120,6 +1160,7 @@ $app->post(
                                 $texts = new Texts(
                                     $this->texts_fields,
                                     $this->preferences,
+                                    $this->router,
                                     array(
                                         'name_adh'      => custom_html_entity_decode(
                                             $member->sname
@@ -1168,7 +1209,7 @@ $app->post(
                                         _T("New account mail sent to '%s'.") :
                                         _T("Account modification mail sent to '%s'.")
                                     );
-                                    $hist->add($msg);
+                                    $this->history->add($msg);
                                     $success_detected[] = $msg;
                                 } else {
                                     $str = str_replace(
@@ -1176,7 +1217,7 @@ $app->post(
                                         $member->sname . ' (' . $member->getEmail() . ')',
                                         _T("A problem happened while sending account mail to '%s'")
                                     );
-                                    $hist->add($str);
+                                    $this->history->add($str);
                                     $error_detected[] = $str;
                                 }
                             }
@@ -1185,7 +1226,6 @@ $app->post(
                             //we do not throw an error, just a simple warning that will be show later
                             $msg = _T("You asked Galette to send a confirmation mail to the member, but mail has been disabled in the preferences.");
                             $warning_detected[] = $msg;
-                            $this->session->mail_warning = $msg;
                         }
                     }
 
@@ -1266,25 +1306,43 @@ $app->post(
                 $dyn_fields->setAllFields('adh', $member->id, $adherent['dyn']);
             }
 
+            if (count($error_detected) > 0) {
+                foreach ($error_detected as $error) {
+                    if (strpos($error, '%member_url_') !== false) {
+                        preg_match('/%member_url_(\d+)/', $error, $matches);
+                        $url = $this->router->pathFor('member', ['id' => $matches[1]]);
+                        $error = str_replace(
+                            '%member_url_' . $matches[1],
+                            $url,
+                            $error
+                        );
+                    }
+                    $this->flash->addMessage(
+                        'error_detected',
+                        $error
+                    );
+                }
+            }
+
+            if (count($warning_detected) > 0) {
+                foreach ($warning_detected as $warning) {
+                    $this->flash->addMessage(
+                        'warning_detected',
+                        $warning
+                    );
+                }
+            }
+            if (count($success_detected) > 0) {
+                foreach ($success_detected as $success) {
+                    $this->flash->addMessage(
+                        'success_detected',
+                        $success
+                    );
+                }
+            }
+
             if (count($error_detected) == 0) {
-                $this->session->account_success = $success_detected;
-                if (count($warning_detected) > 0) {
-                    foreach ($warning_detected as $warning) {
-                        $this->flash->addMessage(
-                            'warning_detected',
-                            $warning
-                        );
-                    }
-                }
-                if (count($success_detected) > 0) {
-                    foreach ($success_detected as $success) {
-                        $this->flash->addMessage(
-                            'success_detected',
-                            $success
-                        );
-                    }
-                }
-                if (!isset($_POST['id_adh']) && !$member->isDueFree()) {
+                if (!isset($_POST['id_adh']) && !$member->isDueFree() && !isset($args['self'])) {
                     return $response
                         ->withStatus(301)
                         ->withHeader(
@@ -1297,41 +1355,44 @@ $app->post(
                                 ]
                             ) . '?id_adh=' . $member->id
                         );
-                } elseif (count($error_detected) == 0) {
+                } else {
+                    if (isset($args['self'])) {
+                        $redirect_url = $this->router->pathFor('login');
+                    } else {
+                        $redirect_url = $this->router->pathFor('member', ['id' => $member->id]);
+                    }
                     return $response
                         ->withStatus(301)
-                        ->withHeader('Location', $this->router->pathFor('member', ['id' => $member->id]));
+                        ->withHeader('Location', $redirect_url);
                 }
             } else {
                 //store entity in session
                 $this->session->member = $member;
 
-                foreach ($error_detected as $error) {
-                    $this->flash->addMessage(
-                        'error_detected',
-                        $error
-                    );
-                }
-
-                if ($member->id) {
-                    $rparams = [
-                        'id'    => $member->id,
-                        'action'    => __('edit', 'routes')
-                    ];
+                if (isset($args['self'])) {
+                    $redirect_url = $this->router->pathFor('subscribe');
                 } else {
-                    $rparams = ['action' => __('add', 'routes')];
+                    if ($member->id) {
+                        $rparams = [
+                            'id'    => $member->id,
+                            'action'    => __('edit', 'routes')
+                        ];
+                    } else {
+                        $rparams = ['action' => __('add', 'routes')];
+                    }
+                    $redirect_url = $this->router->pathFor(
+                        'editmember',
+                        $rparams
+                    );
                 }
 
                 return $response
                     ->withStatus(301)
-                    ->withHeader('Location', $this->router->pathFor(
-                        'editmember',
-                        $rparams
-                    ));
+                    ->withHeader('Location', $redirect_url);
             }
         }
     }
-)->setName('storemembers')->add($authenticate);
+)->setName('storemembers');
 
 $app->get(
     __('/member/remove', 'routes') . '/{id:\d+}',
@@ -1363,13 +1424,15 @@ $app->get(
     }
 )->setName('removeMember')->add($authenticate);
 
-/*$app->get(
+$app->get(
     __('/members/remove', 'routes'),
     function ($request, $response) {
         $post = $request->getParsedBody();
 
+        $filters =  $this->session->filter_members;
+
         $data = [
-            'ids'           => $post['ids'],
+            'id'           => $filters->selected,
             'redirect_uri'  => $this->router->pathFor('members')
         ];
 
@@ -1383,7 +1446,7 @@ $app->get(
                 'page_title'    => _T('Remove members'),
                 'message'       => str_replace(
                     '%count',
-                    count($data['ids']),
+                    count($data['id']),
                     _T('You are about to remove %count members.')
                 ),
                 'form_url'      => $this->router->pathFor('doRemoveMember'),
@@ -1393,7 +1456,7 @@ $app->get(
         );
         return $response;
     }
-)->setName('removeMembers')->add($authenticate);*/
+)->setName('removeMembers')->add($authenticate);
 
 $app->post(
     __('/member/remove', 'routes') . '[/{id:\d+}]',
@@ -1412,36 +1475,58 @@ $app->post(
                 _T("Removal has not been confirmed!")
             );
         } else {
-            //delete member
-            $adh = new Adherent($this->zdb, (int)$post['id']);
             if (isset($this->session->filter_members)) {
                 $filters =  $this->session->filter_members;
             } else {
                 $filters = new MembersList();
             }
             $members = new Members($filters);
-            $del = $members->removeMembers((int)$post['id']);
+
+            if (!is_array($post['id'])) {
+                //delete member
+                $adh = new Adherent($this->zdb, (int)$post['id']);
+                $ids = (array)$post['id'];
+            } else {
+                $ids = $post['id'];
+            }
+
+            $del = $members->removeMembers($ids);
 
             if ($del !== true) {
-                $error_detected = str_replace(
-                    '%name',
-                    $adh->sname,
-                    _T("An error occured trying to remove member %name :/")
-                );
+                if (count($ids) === 1) {
+                    $error_detected = str_replace(
+                        '%name',
+                        $adh->sname,
+                        _T("An error occured trying to remove member %name :/")
+                    );
+                } else {
+                    $error_detected = _T("An error occured trying to remove members :/");
+                }
 
                 $this->flash->addMessage(
                     'error_detected',
                     $error_detected
                 );
             } else {
-                $this->flash->addMessage(
-                    'success_detected',
-                    str_replace(
+                if (!is_array($post['id'])) {
+                    $success_detected = str_replace(
                         '%name',
                         $adh->sname,
                         _T("Member %name has been successfully deleted.")
-                    )
+                    );
+                } else {
+                    $success_detected = str_replace(
+                        '%count',
+                        count($ids),
+                        _T("%count members have been successfully deleted.")
+                    );
+                }
+
+                $this->flash->addMessage(
+                    'success_detected',
+                    $success_detected
                 );
+
                 $success = true;
             }
         }
@@ -1579,7 +1664,9 @@ $app->post(
             }
 
             if (isset($post['attendance_sheet'])) {
-                //TODO
+                return $response
+                    ->withStatus(301)
+                    ->withHeader('Location', $this->router->pathFor('attendance_sheet_details'));
             }
 
             if (isset($post['csv'])) {
@@ -1587,6 +1674,13 @@ $app->post(
                     ->withStatus(301)
                     ->withHeader('Location', $this->router->pathFor('csv-memberslist'));
             }
+
+            if (isset($post['delete'])) {
+                return $response
+                    ->withStatus(301)
+                    ->withHeader('Location', $this->router->pathFor('removeMembers'));
+            }
+
         } else {
             $this->flash->addMessage(
                 'error_detected',
@@ -1763,19 +1857,13 @@ $app->get(
 )->setName('emptyAdhesionForm');
 
 //mailing
-$app->map(
-    ['GET', 'POST'],
+$app->get(
     __('/mailing', 'routes'),
     function ($request, $response) {
-        $post = $request->getParsedBody();
         $get = $request->getQueryParams();
-        $error_detected = [];
-        $success_detected = [];
 
         //We're done :-)
-        if (isset($post['mailing_done'])
-            || isset($post['mailing_cancel'])
-            || isset($get['mailing_new'])
+        if (isset($get['mailing_new'])
             || isset($get['reminder'])
         ) {
             if ($this->session->mailing !== null) {
@@ -1784,11 +1872,6 @@ $app->map(
                 $m->removeAttachments(true);
             }
             $this->session->mailing = null;
-            if (!isset($get['mailing_new']) && !isset($get['reminder'])) {
-                return $response
-                    ->withStatus(301)
-                    ->withHeader('Location', $this->router->pathFor('members'));
-            }
         }
 
         $params = array();
@@ -1799,6 +1882,13 @@ $app->map(
             $this->history->add(
                 _T("Trying to load mailing while mail is disabled in preferences.")
             );
+            $this->flash->addMessage(
+                'error_detected',
+                _T("Trying to load mailing while mail is disabled in preferences.")
+            );
+            return $response
+                ->withStatus(301)
+                ->withHeader('Location', $this->router->pathFor('slash'));
         } else {
             if (isset($this->session->filter_members)) {
                 $filters =  $this->session->filter_members;
@@ -1807,7 +1897,6 @@ $app->map(
             }
 
             if ($this->session->mailing !== null
-                && !isset($post['mailing_cancel'])
                 && !isset($get['from'])
                 && !isset($get['reset'])
             ) {
@@ -1836,6 +1925,105 @@ $app->map(
                     if (isset($profiler)) {
                         $profiler->stop();
                     }
+
+                    return $response
+                        ->withStatus(301)
+                        ->withHeader('Location', $this->router->pathFor('members'));
+                }
+                $m = new Members();
+                $members = $m->getArrayList($filters->selected);
+                $mailing = new Mailing(($members !== false) ? $members : null);
+            }
+
+            if (isset($get['remove_attachment'])) {
+                $mailing->removeAttachment($get['remove_attachment']);
+            }
+
+            if ($mailing->current_step !== Mailing::STEP_SENT) {
+                $this->session->mailing = $mailing;
+            }
+
+            /** TODO: replace that... */
+            $this->session->labels = $mailing->unreachables;
+
+            $params = array_merge(
+                $params,
+                array(
+                    'mailing'           => $mailing,
+                    'attachments'       => $mailing->attachments,
+                    'html_editor'       => true,
+                    'html_editor_active'=> $this->preferences->pref_editor_enabled
+                )
+            );
+        }
+
+        // display page
+        $this->view->render(
+            $response,
+            'mailing_adherents.tpl',
+            array_merge(
+                array(
+                    'page_title'            => _T("Mailing"),
+                    'require_dialog'        => true
+                ),
+                $params
+            )
+        );
+        return $response;
+    }
+)->setName('mailing')->add($authenticate);
+
+$app->post(
+    __('/mailing', 'routes'),
+    function ($request, $response) {
+        $post = $request->getParsedBody();
+        $error_detected = [];
+        $success_detected = [];
+
+        $goto = $this->router->pathFor('mailings');
+
+        //We're done :-)
+        if (isset($post['mailing_done'])
+            || isset($post['mailing_cancel'])
+        ) {
+            if ($this->session->mailing !== null) {
+                // check for temporary attachments to remove
+                $m = $this->session->mailing;
+                $m->removeAttachments(true);
+            }
+            $this->session->mailing = null;
+            return $response
+                ->withStatus(301)
+                ->withHeader('Location', $this->router->pathFor('members'));
+        }
+
+        $params = array();
+
+        if ($this->preferences->pref_mail_method == Mailing::METHOD_DISABLED
+            && !GALETTE_MODE === 'DEMO'
+        ) {
+            $this->history->add(
+                _T("Trying to load mailing while mail is disabled in preferences.")
+            );
+            $error_detected[] = _T("Trying to load mailing while mail is disabled in preferences.");
+            $goto = $this->router->pathFor('slash');
+        } else {
+            if (isset($this->session->filter_members)) {
+                $filters =  $this->session->filter_members;
+            } else {
+                $filters = new MembersList();
+            }
+
+            if ($this->session->mailing !== null
+                && !isset($post['mailing_cancel'])
+            ) {
+                $mailing = $this->session->mailing;
+            } else {
+                if (count($filters->selected) == 0) {
+                    Analog::log(
+                        '[Mailings] No member selected for mailing',
+                        Analog::WARNING
+                    );
 
                     return $response
                         ->withStatus(301)
@@ -1930,11 +2118,9 @@ $app->map(
                     $filters->selected = null;
                     $this->session->filter_members = $filters;
                     $this->session->mailing = null;
+                    $success_detected[] = _T("Mailing has been successfully sent!");
+                    $goto = $this->router->pathFor('members');
                 }
-            }
-
-            if (isset($get['remove_attachment'])) {
-                $mailing->removeAttachment($get['remove_attachment']);
             }
 
             if ($mailing->current_step !== Mailing::STEP_SENT) {
@@ -1955,25 +2141,9 @@ $app->map(
                 $histo = new MailingHistory($this->zdb, $this->login, null, $mailing);
                 if ($histo->storeMailing() !== false) {
                     $success_detected[] = _T("Mailing has been successfully saved.");
-                    $params['mailing_saved'] = true;
                     $this->session->mailing = null;
-                    $head_redirect = array(
-                        'timeout'   => 30,
-                        'url'       => 'gestion_mailings.php'
-                    );
-                    $params['head_redirect'] = $head_redirect;
                 }
             }
-
-            $params = array_merge(
-                $params,
-                array(
-                    'mailing'           => $mailing,
-                    'attachments'       => $mailing->attachments,
-                    'html_editor'       => true,
-                    'html_editor_active'=> $post['html_editor_active']
-                )
-            );
         }
 
         //flash messages if any
@@ -1988,21 +2158,11 @@ $app->map(
             }
         }
 
-        // display page
-        $this->view->render(
-            $response,
-            'mailing_adherents.tpl',
-            array_merge(
-                array(
-                    'page_title'            => _T("Mailing"),
-                    'require_dialog'        => true
-                ),
-                $params
-            )
-        );
-        return $response;
+        return $response
+            ->withStatus(301)
+            ->withHeader('Location', $goto);
     }
-)->setName('mailing')->add($authenticate);
+)->setName('doMailing')->add($authenticate);
 
 $app->map(
     ['GET', 'POST'],
@@ -2038,6 +2198,7 @@ $app->map(
             'mailing_preview.tpl',
             [
                 'page_title'    => _T("Mailing preview"),
+                'mailing_id'    => $args['id'],
                 'mode'          => ($ajax ? 'ajax' : ''),
                 'mailing'       => $mailing,
                 'recipients'    => $mailing->recipients,
@@ -2051,11 +2212,65 @@ $app->map(
     }
 )->setName('mailingPreview')->add($authenticate);
 
+$app->get(
+    __('/mailing', 'routes') . __('/preview', 'routes') . '/{id:\d+}' . __('/attachment', 'routes') . '/{pos:\d+}',
+    function ($request, $response, $args) {
+        $mailing = new Mailing(null);
+        MailingHistory::loadFrom($this->zdb, (int)$args['id'], $mailing, false);
+        $attachments = $mailing->attachments;
+        $attachment = $attachments[$args['pos']];
+        $filepath = $attachment->getDestDir() .  $attachment->getFileName();
+
+
+        $ext = pathinfo($attachment->getFileName())['extension'];
+        $response = $response->withHeader('Content-type', $attachment->getMimeType($filepath));
+
+        $body = $response->getBody();
+        $body->write(file_get_contents($filepath));
+        return $response;
+    }
+)->setName('previewAttachment')->add($authenticate);
+
+$app->post(
+    __('/ajax', 'routes') . __('/mailing', 'routes') . __('/set-recipients', 'routes'),
+    function ($request, $response, $args) {
+        $post = $request->getParsedBody();
+        $mailing = $this->session->mailing;
+
+        $m = new Members();
+
+        $members = $m->getArrayList(
+            $post['recipients'],
+            null,
+            false,
+            true,
+            null,
+            false,
+            false,
+            true
+        );
+        $mailing->setRecipients($members);
+
+        $this->session->mailing = $mailing;
+
+        // display page
+        $this->view->render(
+            $response,
+            'mailing_recipients.tpl',
+            [
+                'mailing'       => $mailing
+
+            ]
+        );
+        return $response;
+    }
+)->setName('mailingRecipients')->add($authenticate);
+
 //reminders
 $app->get(
     __('/reminders', 'routes'),
     function ($request, $response) {
-        $texts = new Texts($this->texts_fields, $this->preferences);
+        $texts = new Texts($this->texts_fields, $this->preferences, $this->router);
 
         $previews = array(
             'impending' => $texts->getTexts('impendingduedate', $this->preferences->pref_lang),
@@ -2091,7 +2306,7 @@ $app->post(
         $success_detected = [];
 
         $post = $request->getParsedBody();
-        $texts = new Texts($this->texts_fields, $this->preferences);
+        $texts = new Texts($this->texts_fields, $this->preferences, $this->router);
         $selected = null;
         if (isset($post['reminders'])) {
             $selected = $post['reminders'];
@@ -2111,7 +2326,7 @@ $app->post(
             foreach ($list_reminders as $reminder) {
                 if ($labels === false) {
                     //send reminders by mail
-                    $sent = $reminder->send($texts, $this->hist, $this->zdb);
+                    $sent = $reminder->send($texts, $this->history, $this->zdb);
 
                     if ($sent === true) {
                         $success_detected[] = $reminder->getMessage();
@@ -2207,10 +2422,10 @@ $app->map(
     function ($request, $response) {
         $post = $request->getParsedBody();
 
-        if ($this->session->filters_members !== null) {
-            $filters = $this->session->filters_members;
+        if ($this->session->filter_members !== null) {
+            $filters = $this->session->filter_members;
         } else {
-            $filters = new Galette\Filters\MembersList();
+            $filters = new MembersList();
         }
 
         // check for ajax mode
@@ -2220,13 +2435,16 @@ $app->map(
             && $post['ajax'] == 'true'
         ) {
             $ajax = true;
+
+            //retrieve selected members
+            $selection = (isset($post['selection']) ) ? $post['selection'] : array();
+
+            $filters->selected = $selection;
+            $this->session->filter_members = $filters;
+        } else {
+            $selection = $filters->selected;
         }
 
-        //retrieve selected members
-        $selection = (isset($post['selection']) ) ? $post['selection'] : array();
-
-        $filters->selected = $selection;
-        $this->session->filters_members = $filters;
 
         // display page
         $this->view->render(
@@ -2247,8 +2465,8 @@ $app->post(
     function ($request, $response) {
         $post = $request->getParsedBody();
 
-        if ($this->session->filters_members !== null) {
-            $filters = $this->session->filters_members;
+        if ($this->session->filter_members !== null) {
+            $filters = $this->session->filter_members;
         } else {
             $filters = new MembersList();
         }
@@ -2257,7 +2475,7 @@ $app->post(
         $selection = (isset($post['selection']) ) ? $post['selection'] : array();
 
         $filters->selected = $selection;
-        $this->session->filters_members = $filters;
+        $this->session->filter_members = $filters;
 
         if (count($filters->selected) == 0) {
             Analog::log('No member selected to generate attendance sheet', Analog::INFO);
@@ -2325,3 +2543,197 @@ $app->post(
         $pdf->Output(_T("attendance_sheet") . '.pdf', 'D');
     }
 )->setName('attendance_sheet')->add($authenticate);
+
+$app->post(
+    __('/ajax/members', 'routes') .
+    '[/{option:' . __('page', 'routes') . '|' . __('order', 'routes') . '}/{value:\d+}]',
+    function ($request, $response, $args) {
+        $post = $request->getParsedBody();
+
+        if (isset($this->session->ajax_members_filters)) {
+            $filters = $this->session->ajax_members_filters;
+        } else {
+            $filters = new MembersList();
+        }
+
+        if (isset($args['option']) && $args['option'] == __('page', 'routes')) {
+            $filters->current_page = (int)$args['value'];
+        }
+
+        //numbers of rows to display
+        if (isset($post['nbshow']) && is_numeric($post['nbshow'])) {
+            $filters->show = $post['nbshow'];
+        }
+
+        $members = new Members($filters);
+        $members_list = $members->getMembersList(true);
+
+        //assign pagination variables to the template and add pagination links
+        $filters->setSmartyPagination($this->router, $this->view->getSmarty(), false);
+
+        $this->session->ajax_members_filters = $filters;
+
+        $selected_members = null;
+        $unreachables_members = null;
+        if (!isset($post['from'])) {
+            $mailing = $this->session->mailing;
+            if (!isset($post['members'])) {
+                $selected_members = $mailing->recipients;
+                $unreachables_members = $mailing->unreachables;
+            } else {
+                $m = new Members();
+                $selected_members = $m->getArrayList($post['members']);
+                if (isset($post['unreachables']) && is_array($post['unreachables'])) {
+                    $unreachables_members = $m->getArrayList($post['unreachables']);
+                }
+            }
+        } else {
+            switch ($post['from']) {
+                case 'groups':
+                    if (!isset($post['gid'])) {
+                        Analog::log(
+                            'Trying to list group members with no group id provided',
+                            Analog::ERROR
+                        );
+                        throw new Exception('A group id is required.');
+                        exit(0);
+                    }
+                    if (!isset($post['members'])) {
+                        $group = new Group((int)$post['gid']);
+                        $selected_members = array();
+                        if (!isset($post['mode']) || $post['mode'] == 'members') {
+                            $selected_members = $group->getMembers();
+                        } elseif ($post['mode'] == 'managers') {
+                            $selected_members = $group->getManagers();
+                        } else {
+                            Analog::log(
+                                'Trying to list group members with unknown mode',
+                                Analog::ERROR
+                            );
+                            throw new Exception('Unknown mode.');
+                            exit(0);
+                        }
+                    } else {
+                        $m = new Members();
+                        $selected_members = $m->getArrayList($post['members']);
+                        if (isset($post['unreachables']) && is_array($post['unreachables'])) {
+                            $unreachables_members = $m->getArrayList($post['unreachables']);
+                        }
+                    }
+                    break;
+                case 'attach':
+                    if (!isset($post['id_adh'])) {
+                        throw new \RuntimeException(
+                            'Current selected member must be excluded while attaching!'
+                        );
+                        exit(0);
+                    }
+                    break;
+            }
+        }
+
+        $params = [
+            'filters'               => $filters,
+            'members_list'          => $members_list,
+            'selected_members'      => $selected_members,
+            'unreachables_members'  => $unreachables_members
+        ];
+
+        if (isset($post['multiple'])) {
+            $params['multiple'] = true;
+        }
+
+        if (isset($post['gid'])) {
+            $params['the_id'] = $post['gid'];
+        }
+
+        if (isset($post['id_adh'])) {
+            $params['excluded'] = $post['id_adh'];
+        }
+
+        // display page
+        $this->view->render(
+            $response,
+            'ajax_members.tpl',
+            $params
+        );
+        return $response;
+    }
+)->setName('ajaxMembers')->add($authenticate);
+
+$app->post(
+    __('/ajax/group/members', 'routes'),
+    function ($request, $response) {
+        $post = $request->getParsedBody();
+
+        $ids = $post['persons'];
+        $mode = $post['person_mode'];
+
+        if (!$ids || !$mode) {
+            Analog::log(
+                'Missing persons and mode for ajaxGroupMembers',
+                Analog::INFO
+            );
+            die();
+        }
+
+        $m = new Members;
+        $persons = $m->getArrayList($ids);
+
+        // display page
+        $this->view->render(
+            $response,
+            'group_persons.tpl',
+            [
+                'persons'       => $persons,
+                'person_mode'   => $mode
+            ]
+        );
+        return $response;
+    }
+)->setName('ajaxGroupMembers')->add($authenticate);
+
+$app->get(
+    __('/member', 'routes') . '/{id:\d+}' . __('/file', 'routes') . '/{fid:\d+}/{pos:\d+}/{name}',
+    function ($request, $response, $args) {
+        $filename = str_replace(
+            [
+                '%mid',
+                '%fid',
+                '%pos'
+            ],
+            [
+                $args['id'],
+                $args['fid'],
+                $args['pos']
+            ],
+            'member_%mid_field_%fid_value_%pos'
+        );
+
+        if (file_exists(GALETTE_FILES_PATH . $filename)) {
+            $type = File::getMimeType($filename);
+            header('Content-Type: ' . $type);
+            header('Content-Disposition: attachment; filename="' . $args['name'] . '";');
+            header('Pragma: no-cache');
+            echo readfile(GALETTE_FILES_PATH . $filename);
+        } else {
+            Analog::log(
+                'A request has been made to get an exported file named `' .
+                $filename .'` that does not exists.',
+                Analog::WARNING
+            );
+
+            $this->flash->addMessage(
+                'error_detected',
+                _T("The file does not exists or cannot be read :(")
+            );
+
+            return $response
+                ->withStatus(404)
+                ->withHeader(
+                    'Location',
+                    $this->router->pathFor('member', ['id' => $args['id']])
+                );
+        }
+    }
+)->setName('getDynamicFile')->add($authenticate);

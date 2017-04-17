@@ -71,7 +71,7 @@ if (!isset($installer)) {
 // and redirect to install page if not
 $installed = file_exists(GALETTE_CONFIG_PATH . 'config.inc.php');
 if (!$installed && !$installer) {
-    header('location: install/index.php');
+    header('location: ./installer.php');
     die();
 }
 
@@ -86,11 +86,6 @@ if (isset($installer) && $installer !== true) {
     include_once GALETTE_CONFIG_PATH . 'config.inc.php';
 }
 
-if (!function_exists('password_hash')) {
-    include_once GALETTE_PASSWORD_COMPAT_PATH . '/password.php';
-}
-
-use Galette\Common\ClassLoader;
 use Analog\Analog;
 use Galette\Core;
 
@@ -110,12 +105,13 @@ $smartyLoader->register();
 
 \Slim\Slim::registerAutoloader();
 require_once GALETTE_SLIM_VIEWS_PATH . 'Smarty.php';*/
-
+/*
+BREAKS as of Galette 0.9-dev
 // To help the built-in PHP dev server, check if the request was actually for
 // something which should probably be served as a static file
 if (PHP_SAPI === 'cli-server' && $_SERVER['SCRIPT_FILENAME'] !== __FILE__) {
     return false;
-}
+}*/
 
 require GALETTE_ROOT . '/vendor/autoload.php';
 
@@ -147,9 +143,13 @@ if (!isset($_COOKIE['show_galette_dashboard'])) {
 }
 
 if (!defined('GALETTE_DISPLAY_ERRORS')) {
-    define('GALETTE_DISPLAY_ERRORS', 0);
+    if (GALETTE_MODE === 'DEV') {
+        define('GALETTE_DISPLAY_ERRORS', 1);
+    } else {
+        define('GALETTE_DISPLAY_ERRORS', 0);
+    }
 }
-ini_set('display_errors', GALETTE_DISPLAY_ERRORS);
+ini_set('display_errors', 0);
 
 set_include_path(
     GALETTE_ZEND_PATH . PATH_SEPARATOR .
@@ -161,9 +161,7 @@ set_include_path(
 /*------------------------------------------------------------------------------
 Logger stuff
 ------------------------------------------------------------------------------*/
-if (!$cron && (!defined('GALETTE_HANDLE_ERRORS')
-    || GALETTE_HANDLE_ERRORS === true)
-) {
+if (!$cron && !defined('GALETTE_TESTS')) {
     //set custom error handler
     set_error_handler(
         array(
@@ -179,14 +177,16 @@ $galette_debug_log = \Analog\Handler\Ignore::init();
 if (!defined('GALETTE_LOG_LVL')) {
     if (GALETTE_MODE === 'DEV') {
         define('GALETTE_LOG_LVL', \Analog\Analog::DEBUG);
+    } elseif (defined('GALETTE_TESTS')) {
+        define('GALETTE_LOG_LVL', \Analog\Analog::ERROR);
     } else {
         define('GALETTE_LOG_LVL', \Analog\Analog::WARNING);
     }
 }
 
 if (defined('GALETTE_TESTS')) {
-    //FIXME: we should check logs files from tests
-    $galette_run_log = \Analog\Handler\Ignore::init();
+    $log_path = GALETTE_LOGS_PATH . 'tests.log';
+    $galette_run_log = \Analog\Handler\File::init($log_path);
 } else {
     if ((!$installer || ($installer && defined('GALETTE_LOGGER_CHECKED'))) && !$cron) {
         $now = new \DateTime();
@@ -251,9 +251,7 @@ if (!$installer and !defined('GALETTE_TESTS')) {
      */
     $zdb = new Core\Db();
 
-    if ($zdb->checkDbVersion()
-        || strpos($_SERVER['PHP_SELF'], 'picture.php') !== false
-    ) {
+    if ($zdb->checkDbVersion()) {
 
         /**
          * Load preferences
@@ -278,7 +276,7 @@ if (!$installer and !defined('GALETTE_TESTS')) {
         if (!defined('GALETTE_THEME')) {
             define(
                 'GALETTE_THEME',
-                'themes/' . $preferences->pref_theme . '/'
+                GALETTE_BASE_PATH . 'themes/' . $preferences->pref_theme . '/'
             );
         }
 

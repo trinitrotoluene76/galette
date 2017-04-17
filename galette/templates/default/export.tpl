@@ -3,16 +3,18 @@
 {block name="content"}
         <form class="form" action="{path_for name="doExport"}" method="post" enctype="multipart/form-data">
         <p>{_T string="Each selected export will be stored into a separate file in the exports directory."}</p>
-{if $written|@count gt 0}
+
+{if $flash->getMessage('written_exports')|@count > 0}
         <div id="successbox">
             <p>{_T string="The following files have been written on disk:"}</p>
             <ul>
-{foreach item=ex from=$written}
-                <li><a href="{path_for name="getCsv" data=["type" => {_T string="export" domain="routes"}, "file" => $ex.name]}">{$ex.name} ({$ex.file})</a></li>
-{/foreach}
+    {foreach from=$flash->getMessage('written_exports') item=ex}
+                <li>{$ex}</li>
+    {/foreach}
             </ul>
         </div>
 {/if}
+
 {if $existing|@count gt 0}
             <fieldset>
                 <legend class="ui-state-active ui-corner-top">{_T string="Existing exports"}</legend>
@@ -21,6 +23,7 @@
                     <table class="listing">
                         <thead>
                             <tr>
+                                <th class="id_row">#</th>
                                 <th>{_T string="Name"}</th>
                                 <th>{_T string="Date"}</th>
                                 <th>{_T string="Size"}</th>
@@ -28,15 +31,18 @@
                             </tr>
                         </thead>
                         <tbody>
-    {foreach item=export from=$existing name=existing_list}
+    {foreach item=export from=$existing name=existing_list name=eachexport}
                             <tr class="{if $smarty.foreach.existing_list.iteration % 2 eq 0}even{else}odd{/if}">
-                                <td >
+                                <td data-scope="id">
+                                    {$smarty.foreach.eachexport.iteration}
+                                </td>
+                                <td data-scope="row">
                                     <a href="{path_for name="getCsv" data=["type" => {_T string="export" domain="routes"}, "file" => $export.name]}">{$export.name}</a>
                                 </td>
-                                <td>
+                                <td data-title="{_T string="Date"}">
                                     {$export.date}
                                 </td>
-                                <td>
+                                <td data-title="{_T string="Size"}">
                                     {$export.size}
                                 </td>
                                 <td class="actions_row">
@@ -57,22 +63,22 @@
                     <table class="listing">
                         <thead>
                             <tr>
+                                <th class="small_head"/>
                                 <th>{_T string="Name"}</th>
                                 <th>{_T string="Description"}</th>
-                                <th class="small_head"/>
                             </tr>
                         </thead>
                         <tbody>
     {foreach item=param from=$parameted name=parameted_list}
                             <tr class="{if $smarty.foreach.parameted_list.iteration % 2 eq 0}even{else}odd{/if}">
-                                <td>
+                                <td data-scope="id">
+                                    <input type="checkbox" name="export_parameted[]" id="{$param.id}" value="{$param.id}"/>
+                                </td>
+                                <td data-scope="row">
                                     <label for="{$param.id}">{$param.name}</label>
                                 </td>
-                                <td>
+                                <td data-title="{_T string="Description"}">
                                     <label for="{$param.id}">{$param.description}</label>
-                                </td>
-                                <td>
-                                    <input type="checkbox" name="export_parameted[]" id="{$param.id}" value="{$param.id}"/>
                                 </td>
                             </tr>
 {/foreach}
@@ -88,7 +94,7 @@
                 <legend class="ui-state-active ui-corner-top">{_T string="Galette tables exports"}</legend>
                 <div>
                     <p>{_T string="Additionnaly, which table(s) do you want to export?"}</p>
-                    <table class="listing">
+                    <table class="listing same">
                         <thead>
                             <tr>
                                 <th>{_T string="Table name"}</th>

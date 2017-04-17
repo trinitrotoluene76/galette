@@ -16,6 +16,26 @@
         <script type="text/javascript" src="{$jquery_dir}jquery-ui-{$jquery_ui_version}/jquery.ui.position.min.js"></script>
         <script type="text/javascript" src="{$jquery_dir}jquery-ui-{$jquery_ui_version}/jquery.ui.dialog.min.js"></script>
 {/if}
+{if $autocomplete}
+    <script type="text/javascript" src="{base_url}/{$jquery_dir}jquery-ui-{$jquery_ui_version}/jquery.ui.menu.min.js"></script>
+    <script type="text/javascript" src="{base_url}/{$jquery_dir}jquery-ui-{$jquery_ui_version}/jquery.ui.autocomplete.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#ville_adh, #lieu_naissance').autocomplete({
+                source: function (request, response) {
+                    $.post('{path_for name="suggestTown"}', request, response);
+                },
+                minLength: 2
+            });
+            $('#pays_adh').autocomplete({
+                source: function (request, response) {
+                    $.post('{path_for name="suggestCountry"}', request, response);
+                },
+                minLength: 2
+            });
+        });
+    </script>
+{/if}
 {* If some additionnals headers should be added from plugins, we load the relevant template file
 We have to use a template file, so Smarty will do its work (like replacing variables). *}
 {if $headers|@count != 0}
@@ -28,8 +48,13 @@ We have to use a template file, so Smarty will do its work (like replacing varia
 {/if}
     </head>
     <body>
-        {* IE7 and above are no longer supported *}
-        <!--[if lt IE 8]>
+{if isset($GALETTE_DISPLAY_ERRORS) && $GALETTE_DISPLAY_ERRORS && $GALETTE_MODE != 'DEV'}
+        <div id="oldie">
+            <p>{_T string="Galette is configured to display errors. This must be avoided in production environments."}</p>
+        </div>
+{/if}
+        {* IE8 and above are no longer supported *}
+        <!--[if lte IE 8]>
         <div id="oldie">
             <p>{_T string="Your browser version is way too old and no longer supported in Galette for a while."}</p>
             <p>{_T string="Please update your browser or use an alternative one, like Mozilla Firefox (http://mozilla.org)."}</p>

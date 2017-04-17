@@ -59,6 +59,9 @@ use Galette\Repository\PdfModels;
 use Galette\Entity\Title;
 use Galette\Repository\Titles;
 use Galette\Entity\Texts;
+use Galette\Core\Install;
+use Zend\Db\Adapter\Adapter;
+use Galette\Core\PluginInstall;
 
 //galette's dashboard
 $app->get(
@@ -160,6 +163,7 @@ $app->get(
                 'themes'                => $themes,
                 'require_tabs'          => true,
                 'color_picker'          => true,
+                'require_dialog'        => true
             )
         );
         return $response;
@@ -415,7 +419,7 @@ $app->post(
             }
 
             // missing required fields?
-            while (list($key, $val) = each($required)) {
+            foreach ($required as $key => $val) {
                 if (!isset($pref[$key])) {
                     $this->flash->addMessage(
                         'error_detected',
@@ -460,7 +464,7 @@ $app->post(
 
             if (count($this->flash->getMessage('error_detected')) == 0) {
                 // update preferences
-                while (list($champ,$valeur) = each($insert_values)) {
+                foreach ($insert_values as $champ=>$valeur) {
                     if ($this->login->isSuperAdmin()
                         || (!$this->login->isSuperAdmin()
                         && ($champ != 'pref_admin_pass' && $champ != 'pref_admin_login'))
@@ -575,6 +579,70 @@ $app->post(
     }
 )->setName('store-preferences')->add($authenticate);
 
+$app->get(
+    __('/test/email', 'routes'),
+    function ($request, $response) {
+        $sent = false;
+        if (!$this->preferences->pref_mail_method > GaletteMail::METHOD_DISABLED) {
+            $this->flash->addMessage(
+                'error_detected',
+                _T("You asked Galette to send a test email, but mail has been disabled in the preferences.")
+            );
+        } else {
+            $get = $request->getQueryParams();
+            $dest = (isset($get['adress']) ? $get['adress'] : $this->preferences->pref_email_newadh);
+            if (GaletteMail::isValidEmail($dest)) {
+                $mail = new GaletteMail();
+                $mail->setSubject(_T('Test message'));
+                $mail->setRecipients(
+                    array(
+                        $dest => _T("Galette admin")
+                    )
+                );
+                $mail->setMessage(_T('Test message.'));
+                $sent = $mail->send();
+
+                if ($sent) {
+                    $this->flash->addMessage(
+                        'success_detected',
+                        str_replace(
+                            '%email',
+                            $dest,
+                            _T("An email has been sent to %email")
+                        )
+                    );
+                } else {
+                    $this->flash->addMessage(
+                        'error_detected',
+                        str_replace(
+                            '%email',
+                            $dest,
+                            _T("No email sent to %email")
+                        )
+                    );
+                }
+            } else {
+                $this->flash->addMessage(
+                    'error_detected',
+                    _T("Invalid email adress!")
+                );
+            }
+        }
+
+        if (!$request->isXhr()) {
+            return $response
+                ->withStatus(301)
+                ->withHeader('Location', $this->router->pathFor('preferences'));
+        } else {
+            return $response->withJson(
+                [
+                    'sent'  => $sent
+                ]
+            );
+        }
+    }
+)->setName('testEmail')->add($authenticate);
+
 //charts
 $app->get(
     __('/charts', 'routes'),
@@ -608,53 +676,6 @@ $app->get(
     __('/plugins', 'routes'),
     function ($request, $response) {
         $plugins = $this->get('plugins');
-        if (GALETTE_MODE !== 'DEMO') {
-            $reload_plugins = false;
-            if (isset($_GET['activate'])) {
-                try {
-                    $plugins->activateModule($_GET['activate']);
-                    $this->flash->addMessage(
-                        'success_detected',
-                        str_replace(
-                            '%name',
-                            $_GET['activate'],
-                            _T("Plugin %name has been enabled")
-                        )
-                    );
-                    $reload_plugins = true;
-                } catch (Exception $e) {
-                    $this->flash->addMessage(
-                        'error_detected',
-                        $e->getMessage()
-                    );
-                }
-            }
-
-            if (isset($_GET['deactivate'])) {
-                try {
-                    $plugins->deactivateModule($_GET['deactivate']);
-                    $this->flash->addMessage(
-                        'success_detected',
-                        str_replace(
-                            '%name',
-                            $_GET['deactivate'],
-                            _T("Plugin %name has been disabled")
-                        )
-                    );
-                    $reload_plugins = true;
-                } catch (Exception $e) {
-                    $this->flash->addMessage(
-                        'error_detected',
-                        $e->getMessage()
-                    );
-                }
-            }
-
-            //If some plugins have been (de)activated, we have to reload
-            if ($reload_plugins === true) {
-                $plugins->loadModules(GALETTE_PLUGINS_PATH, $i18n->getFileName());
-            }
-        }
 
         $plugins_list = $plugins->getModules();
         $disabled_plugins = $plugins->getDisabledModules();
@@ -673,6 +694,277 @@ $app->get(
         return $response;
     }
 )->setName('plugins')->add($authenticate);
+
+//plugins (de)activation
+$app->get(
+    __('/plugins', 'routes') .
+    '/{action:' . __('activate', 'routes') . '|' . __('deactivate', 'routes') .'}/{module_id}',
+    function ($request, $response, $args) {
+        if (GALETTE_MODE !== 'DEMO') {
+            $plugins = $this->get('plugins');
+            $action = $args['action'];
+            $reload_plugins = false;
+            if ($action == __('activate', 'routes')) {
+                try {
+                    $plugins->activateModule($args['module_id']);
+                    $this->flash->addMessage(
+                        'success_detected',
+                        str_replace(
+                            '%name',
+                            $args['module_id'],
+                            _T("Plugin %name has been enabled")
+                        )
+                    );
+                    $reload_plugins = true;
+                } catch (\Exception $e) {
+                    $this->flash->addMessage(
+                        'error_detected',
+                        $e->getMessage()
+                    );
+                }
+            } elseif ($args['action'] == __('deactivate', 'routes')) {
+                try {
+                    $plugins->deactivateModule($args['module_id']);
+                    $this->flash->addMessage(
+                        'success_detected',
+                        str_replace(
+                            '%name',
+                            $args['module_id'],
+                            _T("Plugin %name has been disabled")
+                        )
+                    );
+                    $reload_plugins = true;
+                } catch (\Exception $e) {
+                    $this->flash->addMessage(
+                        'error_detected',
+                        $e->getMessage()
+                    );
+                }
+            }
+
+            //If some plugins have been (de)activated, we have to reload
+            if ($reload_plugins === true) {
+                $plugins->loadModules(GALETTE_PLUGINS_PATH, $this->i18n->getFileName());
+            }
+        }
+
+        return $response
+            ->withStatus(301)
+            ->withHeader('Location', $this->router->pathFor('plugins'));
+    }
+)->setName('pluginsActivation')->add($authenticate);
+
+$app->map(
+    ['GET', 'POST'],
+    __('/plugins', 'routes') . __('/initialize-database', 'routes') . '/{id}',
+    function ($request, $response, $args) {
+        if (GALETTE_MODE === 'DEMO') {
+            Analog::log(
+                'Trying to access plugin database initialization in DEMO mode.',
+                Analog::WARNING
+            );
+            return $response->withStatus(403);
+        }
+
+        $params = [];
+        $success_detected = [];
+        $warning_detected = [];
+        $error_detected = [];
+
+        $plugid = $args['id'];
+        $plugin = $this->plugins->getModules($plugid);
+
+        if ($plugin === null) {
+            Analog::log(
+                'Unable to load plugin `' . $plugid . '`!',
+                Analog::URGENT
+            );
+            $notFound = $this->notFoundHandler;
+            return $notFound($request, $response);
+        }
+
+        $install = null;
+        $mdplugin = md5($plugin['root']);
+        if (isset($this->session->$mdplugin)
+            && !isset($_GET['raz'])
+        ) {
+            $install = $this->session->$mdplugin;
+        } else {
+            $install = new PluginInstall();
+        }
+
+        $post = $request->getParsedBody();
+
+        if (isset($post['stepback_btn'])) {
+            $install->atPreviousStep();
+        } elseif (isset($post['install_prefs_ok'])) {
+            $install->atEndStep();
+        } elseif (isset($_POST['previous_version'])) {
+            $install->setInstalledVersion($_POST['previous_version']);
+            $install->atDbUpgradeStep();
+        } elseif (isset($post['install_dbperms_ok'])) {
+            if ($install->isInstall()) {
+                $install->atDbInstallStep();
+            } elseif ($install->isUpgrade()) {
+                $install->atVersionSelection();
+            }
+        } elseif (isset($post['install_type'])) {
+            $install->setMode($post['install_type']);
+            $install->atDbStep();
+        }
+
+        $step = 1;
+        $istep = 1;
+
+        if (isset($post['install_type'])) {
+            $params['install_type'] = $post['install_type'];
+            $istep = 2;
+        }
+
+        if (isset($post['install_dbperms_ok'])) {
+            if ($post['install_type'] === PluginInstall::INSTALL) {
+                $istep = 4;
+            } else {
+                $istep = 3;
+            }
+        }
+
+        if (isset($post['previous_version'])) {
+            $istep = 4;
+        }
+
+        if (isset($post['install_dbwrite_ok'])) {
+            $istep = 5;
+        }
+
+        if ($post['install_type'] == PluginInstall::INSTALL) {
+            $step = 'i' . $istep;
+        } elseif ($istep > 1 && $post['install_type'] == PluginInstall::UPDATE) {
+            $step = 'u' . $istep;
+        }
+
+        switch ($step) {
+            case '1':
+                //let's look for updates scripts
+                $update_scripts = $install::getUpdateScripts($plugin['root'], TYPE_DB);
+                if (count($update_scripts) > 0) {
+                    $params['update_scripts'] = $update_scripts;
+                }
+                break;
+            case 'i2':
+            case 'u2':
+                if (!defined('GALETTE_THEME_DIR')) {
+                    define('GALETTE_THEME_DIR', './themes/default/');
+                }
+
+                $install_plugin = true;
+                //not used here, but from include
+                $zdb = $this->zdb;
+                ob_start();
+                include_once __DIR__ . '/../../install/steps/db_checks.php';
+                $params['results'] = ob_get_contents();
+                ob_end_clean();
+                break;
+            case 'u3':
+                $update_scripts = Install::getUpdateScripts($plugin['root'], TYPE_DB);
+                $params['update_scripts'] = $update_scripts;
+                break;
+            case 'i4':
+            case 'u4':
+                $messages = [];
+
+                // begin : copyright (2002) the phpbb group (support@phpbb.com)
+                // load in the sql parser
+                include GALETTE_ROOT . 'includes/sql_parse.php';
+                if ($step == 'u4') {
+                    $update_scripts = Install::getUpdateScripts(
+                        $plugin['root'],
+                        TYPE_DB,
+                        $_POST['previous_version']
+                    );
+                } else {
+                    $update_scripts['current'] = TYPE_DB . '.sql';
+                }
+
+                $sql_query = '';
+                foreach ($update_scripts as $key => $val) {
+                    $sql_query .= @fread(
+                        @fopen($plugin['root'] . '/scripts/' . $val, 'r'),
+                        @filesize($plugin['root'] . '/scripts/' . $val)
+                    );
+                    $sql_query .= "\n";
+                }
+
+                $sql_query = preg_replace('/galette_/', PREFIX_DB, $sql_query);
+                $sql_query = remove_remarks($sql_query);
+
+                $sql_query = split_sql_file($sql_query, ';');
+
+                for ($i = 0; $i < sizeof($sql_query); $i++) {
+                    $query = trim($sql_query[$i]);
+                    if ($query != '' && $query[0] != '-') {
+                        //some output infos
+                        @list($w1, $w2, $w3, $extra) = array_pad(explode(' ', $query, 4), 4, '');
+                        if ($extra != '') {
+                            $extra = '...';
+                        }
+                        try {
+                            $this->zdb->db->query(
+                                $query,
+                                Adapter::QUERY_MODE_EXECUTE
+                            );
+                            $messages['success'][] = $w1 . ' ' . $w2 . ' ' . $w3 .
+                                ' ' . $extra;
+                        } catch (Exception $e) {
+                            Analog::log(
+                                'Error executing query | ' . $e->getMessage() .
+                                ' | Query was: ' . $query,
+                                Analog::WARNING
+                            );
+                            if ((strcasecmp(trim($w1), 'drop') != 0)
+                                && (strcasecmp(trim($w1), 'rename') != 0)
+                            ) {
+                                $error_detected[] = $w1 . ' ' . $w2 . ' ' . $w3 . ' ' . $extra;
+                                $error_detected[] = $e->getMessage() . '<br/>(' . $query  . ')';
+                            } else {
+                                //if error are on drop, DROP, rename or RENAME we can continue
+                                $warning_detected[] = $w1 . ' ' . $w2 . ' ' . $w3 . ' ' . $extra;
+                                $warning_detected[] = $e->getMessage() . '<br/>(' . $query  . ')';
+                            }
+                        }
+                    }
+                }
+                break;
+            case 'i5':
+            case 'u5':
+                if ($step == 'i5') {
+                    $title = _T("Installation complete !");
+                } else {
+                    $title = _T("Update complete !");
+                }
+                break;
+        }
+
+        $this->session->$mdplugin = $install;
+
+        $params += [
+            'page_title'    => $install->getStepTitle(),
+            'step'          => $step,
+            'istep'         => $istep,
+            'plugid'        => $plugid,
+            'plugin'        => $plugin,
+            'mode'          => ($request->isXhr() ? 'ajax' : '')
+        ];
+
+        // display page
+        $this->view->render(
+            $response,
+            'plugin_initdb.tpl',
+            $params
+        );
+        return $response;
+    }
+)->setName('pluginInitDb')->add($authenticate);
 
 //galette logs
 $app->get(
@@ -1148,8 +1440,9 @@ $app->get(
             array(
                 'mode'          => $request->isXhr() ? 'ajax' : '',
                 'page_title'    => sprintf(
-                    _T('Remove %1$s file'),
-                    $args['type']
+                    _T('Remove %1$s file %2$s'),
+                    $args['type'],
+                    $args['file']
                 ),
                 'form_url'      => $this->router->pathFor(
                     'doRemoveCsv',
@@ -1229,6 +1522,7 @@ $app->post(
     function ($request, $response) {
         $post = $request->getParsedBody();
         $csv = new CsvOut();
+        $written = [];
 
         if (isset($post['export_tables']) && $post['export_tables'] != '') {
             foreach ($post['export_tables'] as $table) {
@@ -1248,13 +1542,10 @@ $app->post(
                             $fp
                         );
                         fclose($fp);
-                        $this->flash->addMessage(
-                            'written_exports',
-                            array(
-                                'name' => $filename,
-                                'file' => $filepath
-                            )
-                        );
+                        $written[] = [
+                            'name' => $table,
+                            'file' => $filename
+                        ];
                     }
                 } else {
                     $this->flash->addMessage(
@@ -1306,15 +1597,22 @@ $app->post(
                         break;
                     default:
                         //no error, file has been writted to disk
-                        $this->flash->addMessage(
-                            'written_exports',
-                            array(
-                                'name' => $pn,
-                                'file' => $res
-                            )
-                        );
+                        $written[] = [
+                            'name' => $pn,
+                            'file' => (string)$res
+                        ];
                         break;
                 }
+            }
+        }
+
+        if (count($written)) {
+            foreach ($written as $ex) {
+                $path = $this->router->pathFor('getCsv', ['type' => __('export', 'routes'), 'file' => $ex['file']]);
+                $this->flash->addMessage(
+                    'written_exports',
+                    '<a href="' . $path . '">' . $ex['name'] . ' (' . $ex['file'] . ')</a>'
+                );
             }
         }
 
@@ -1347,7 +1645,8 @@ $app->get(
                     $filename .'` that does not exists.',
                     Analog::WARNING
                 );
-                header('HTTP/1.0 404 Not Found');
+                $notFound = $this->notFoundHandler;
+                return $notFound($request, $response);
             }
         } else {
             Analog::log(
@@ -1355,7 +1654,11 @@ $app->get(
                 $filename . '`. Access has not been granted.',
                 Analog::WARNING
             );
-            header('HTTP/1.0 403 Forbidden');
+            $error = $this->errorHandler;
+            return $error(
+                $request,
+                $response->withStatus(403)
+            );
         }
     }
 )->setName('getCsv')->add($authenticate);
@@ -1945,14 +2248,22 @@ $app->post(
 )->setname('editTitle')->add($authenticate);
 
 $app->get(
-    __('/texts', 'routes'),
-    function ($request, $response) {
-        $cur_lang = $this->preferences->pref_lang;
-        $cur_ref = Texts::DEFAULT_REF;
+    __('/texts', 'routes') . '[/{lang}/{ref}]',
+    function ($request, $response, $args) {
+        if (!isset($args['lang'])) {
+            $args['lang'] = $this->preferences->pref_lang;
+        }
+        if (!isset($args['ref'])) {
+            $args['ref'] = Texts::DEFAULT_REF;
+        }
 
-        $texts = new Texts($this->texts_fields, $this->preferences);
+        $texts = new Texts(
+            $this->texts_fields,
+            $this->preferences,
+            $this->router
+        );
 
-        $mtxt = $texts->getTexts($cur_ref, $cur_lang);
+        $mtxt = $texts->getTexts($args['ref'], $args['lang']);
 
         // display page
         $this->view->render(
@@ -1960,10 +2271,10 @@ $app->get(
             'gestion_textes.tpl',
             [
                 'page_title'        => _T("Automatic emails texts edition"),
-                'reflist'           => $texts->getRefs($cur_lang),
+                'reflist'           => $texts->getRefs($args['lang']),
                 'langlist'          => $this->i18n->getList(),
-                'cur_lang'          => $cur_lang,
-                'cur_ref'           => $cur_ref,
+                'cur_lang'          => $args['lang'],
+                'cur_ref'           => $args['ref'],
                 'mtxt'              => $mtxt,
                 'require_dialog'    => true
             ]
@@ -1973,10 +2284,29 @@ $app->get(
 )->setName('texts')->add($authenticate);
 
 $app->post(
+    __('/texts', 'routes') . __('/change', 'routes'),
+    function ($request, $response) {
+        $post = $request->getParsedBody();
+        return $response
+            ->withStatus(301)
+            ->withHeader(
+                'Location',
+                $this->router->pathFor(
+                    'texts',
+                    [
+                        'lang'  => $post['sel_lang'],
+                        'ref'   => $post['sel_ref']
+                    ]
+                )
+            );
+    }
+)->setName('changeText')->add($authenticate);
+
+$app->post(
     __('/texts', 'routes'),
     function ($request, $response) {
         $post = $request->getParsedBody();
-        $texts = new Texts($this->texts_fields, $this->preferences);
+        $texts = new Texts($this->texts_fields, $this->preferences, $this->router);
 
         //set the language
         if (isset($post['sel_lang'])) {
@@ -1987,7 +2317,7 @@ $app->post(
             $cur_ref = $post['sel_ref'];
         }
 
-        $mtxt = $texts->getTexts($cur_ref, $cur_lang);
+        $mtxt = $texts->getTexts($cur_ref, $cur_lang, $this->router);
         $res = $texts->setTexts(
             $cur_ref,
             $cur_lang,
@@ -2420,7 +2750,7 @@ $app->post(
             }
 
             // Validate form
-            while (list($key, $value) = each($post)) {
+            foreach ($post as $key => $value) {
                 if (substr($key, 0, 11) == 'text_trans_') {
                     $trans_lang = substr($key, 11);
                     $trans_lang = str_replace('_utf8', '.utf8', $trans_lang);
@@ -3250,3 +3580,76 @@ $app->post(
             );
     }
 )->setName('doEditDynamicField')->add($authenticate);
+
+$app->get(
+    __('/generate-data', 'routes'),
+    function ($request, $response, $args) {
+
+        $params = [
+            'page_title'            => _T('Generate fake data'),
+            'number_members'        => \Galette\Util\FakeData::DEFAULT_NB_MEMBERS,
+            'number_contrib'        => \Galette\Util\FakeData::DEFAULT_NB_CONTRIB,
+            'number_groups'         => \Galette\Util\FakeData::DEFAULT_NB_GROUPS,
+            'number_transactions'   => \Galette\Util\FakeData::DEFAULT_NB_TRANSACTIONS
+        ];
+
+        // display page
+        $this->view->render(
+            $response,
+            'fake_data.tpl',
+            $params
+        );
+        return $response;
+    }
+)->setName('fakeData')->add($authenticate);
+
+$app->post(
+    __('/generate-data', 'routes'),
+    function ($request, $response) {
+        $post = $request->getParsedBody();
+
+        $fakedata = new \Galette\Util\FakeData($this->zdb, $this->i18n);
+
+        $fakedata->setDependencies(
+            $this->preferences,
+            $this->members_fields,
+            $this->history,
+            $this->login
+        );
+
+        $fakedata
+            ->setNbMembers($post['number_members'])
+            ->setNbGroups($post['number_groups'])
+            ->setNbTransactions($post['number_transactions'])
+            ->setMaxContribs($post['number_contrib']);
+
+        $fakedata->generate();
+
+        $report = $fakedata->getReport();
+
+        foreach ($report['success'] as $success) {
+            $this->flash->addMessage(
+                'success_detected',
+                $success
+            );
+        }
+
+        foreach ($report['errors'] as $error) {
+            $this->flash->addMessage(
+                'error_detected',
+                $error
+            );
+        }
+
+        foreach ($report['warnings'] as $warning) {
+            $this->flash->addMessage(
+                'warning_detected',
+                $warning
+            );
+        }
+
+        return $response
+            ->withStatus(301)
+            ->withHeader('Location', $this->router->pathFor('slash'));
+    }
+)->setName('doFakeData')->add($authenticate);

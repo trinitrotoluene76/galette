@@ -45,6 +45,7 @@ use Galette\Entity\Adherent;
 use Galette\Entity\ContributionsTypes;
 use Galette\Core\GaletteMail;
 use Galette\Entity\Texts;
+use Galette\IO\PdfContribution;
 
 $app->get(
     '/{type:' . __('transactions', 'routes') .'|'. __('contributions', 'routes') .
@@ -292,6 +293,7 @@ $app->get(
         } else {
             if ($args['action'] === __('edit', 'routes')) {
                 $contrib = new Contribution($this->zdb, $this->login, (int)$id_cotis);
+                $id_adh = $contrib->member;
                 if ($contrib->id == '') {
                     //not possible to load contribution, exit
                     $this->flash->addMessage(
@@ -596,7 +598,7 @@ $app->post(
                                             array($adh->sname, $adh->getEmail()),
                                             _T("A problem happened while sending to admin post contribution notification for user %name (%email) contribution")
                                         );
-                                        $hist->add($txt);
+                                        $this->hist->add($txt);
                                         $error_detected[] = $txt;
                                         //Mails are disabled... We log (not safe, but)...
                                         Analog::log(
@@ -638,6 +640,7 @@ $app->post(
                 $texts = new Texts(
                     $this->texts_fields,
                     $this->preferences,
+                    $this->router,
                     array(
                         'name_adh'          => custom_html_entity_decode($adh->sname),
                         'firstname_adh'     => custom_html_entity_decode($adh->surname),
@@ -672,7 +675,7 @@ $app->post(
                         $sent = $mail->send();
 
                         if ($sent) {
-                            $hist->add(
+                            $this->hist->add(
                                 preg_replace(
                                     array('/%name/', '/%email/'),
                                     array($adh->sname, $adh->getEmail()),
@@ -685,7 +688,7 @@ $app->post(
                                 array($adh->sname, $adh->getEmail()),
                                 _T("A problem happened while sending contribution receipt to user %name (%email)")
                             );
-                            $hist->add($txt);
+                            $this->hist->add($txt);
                             $error_detected[] = $txt;
                         }
                     } else {
@@ -694,7 +697,7 @@ $app->post(
                             array($adh->sname, $adh->getEmail()),
                             _T("Trying to send a mail to a member (%name) with an invalid address: %email")
                         );
-                        $hist->add($txt);
+                        $this->hist->add($txt);
                         $warning_detected[] = $txt;
                     }
                 }
@@ -728,7 +731,7 @@ $app->post(
                     $sent = $mail->send();
 
                     if ($sent) {
-                        $hist->add(
+                        $this->hist->add(
                             preg_replace(
                                 array('/%name/', '/%email/'),
                                 array($adh->sname, $adh->getEmail()),
@@ -741,7 +744,7 @@ $app->post(
                             array($adh->sname, $adh->getEmail()),
                             _T("A problem happened while sending to admin notification for user %name (%email) contribution")
                         );
-                        $hist->add($txt);
+                        $this->hist->add($txt);
                         $error_detected[] = $txt;
                     }
                 }
@@ -834,7 +837,7 @@ $app->get(
             $dyn_fields = $this->session->transaction['dyn_fields'];
             $this->session->transaction = null;
         } else {
-            $trans = new Transaction($this->zdb);
+            $trans = new Transaction($this->zdb, $this->login);
             //TODO: dynamic fields should be handled by Transaction object
             $dyn_fields = new DynamicFields();
         }
@@ -1003,7 +1006,7 @@ $app->post(
         '/{action:' . __('add') . '|' . __('edit') .'}[/{id:\d+}]',
     function ($request, $response, $args) {
         $post = $request->getParsedBody();
-        $trans = new Transaction($this->zdb);
+        $trans = new Transaction($this->zdb, $this->login);
         //TODO: dynamic fields should be handled by Transaction object
         $dyn_fields = new DynamicFields();
 
@@ -1277,3 +1280,13 @@ $app->post(
         }
     }
 )->setName('doRemoveContribution')->add($authenticate);
+
+//Contribution PDF
+$app->get(
+    __('/contribution', 'routes') . __('/print', 'routes') . '/{id:\d+}',
+    function ($request, $response, $args) {
+        $contribution = new Contribution($this->zdb, $this->login, (int)$args['id']);
+        $pdf = new PdfContribution($contribution, $this->zdb, $this->preferences);
+        $pdf->download();
+    }
+)->setName('printContribution')->add($authenticate);

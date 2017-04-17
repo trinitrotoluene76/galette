@@ -1,14 +1,28 @@
+{if !isset($selector)}
+    {assign var="selector" value=".delete"}
+{/if}
+{if !isset($deleteurl)}
+    {assign var="deleteurl" value="_this.attr('href')"}
+{/if}
         //handle removals
-        $('.delete').on('click', function(event) {
+        $('{$selector}').on('click', function(event) {
             event.preventDefault();
             var _this = $(this);
-            var _href = _this.attr('href');
 
+{if isset($extra_check)}
+            {$extra_check}
+{/if}
+{if !isset($method)}
+    {assign var="method" value="GET"}
+{/if}
             $.ajax({
-                url: _href,
-                type: "GET",
+                url: {$deleteurl},
+                type: "{$method}",
                 data: {
                     ajax: true,
+{if isset($extra_data)}
+                    {$extra_data}
+{/if}
                 },
                 datatype: 'json',
                 {include file="js_loader.tpl"},

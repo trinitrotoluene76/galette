@@ -45,18 +45,16 @@
             <pre id="sql_qry" class="hidden">{$filters->query}</pre>
 {/if}
         </div>
-        <table class="infoline">
-            <tr>
-                <td class="left">{$nb_members} {if $nb_members != 1}{_T string="members"}{else}{_T string="member"}{/if}</td>
-                <td class="right">
-                    <label for="nbshow">{_T string="Records per page:"}</label>
-                    <select name="nbshow" id="nbshow">
-                        {html_options options=$nbshow_options selected=$numrows}
-                    </select>
-                    <noscript> <span><input type="submit" value="{_T string="Change"}" /></span></noscript>
-                </td>
-            </tr>
-        </table>
+        <div class="infoline">
+            {$nb_members} {if $nb_members != 1}{_T string="members"}{else}{_T string="member"}{/if}
+            <div class="fright">
+                <label for="nbshow">{_T string="Records per page:"}</label>
+                <select name="nbshow" id="nbshow">
+                    {html_options options=$nbshow_options selected=$numrows}
+                </select>
+                <noscript> <span><input type="submit" value="{_T string="Change"}" /></span></noscript>
+            </div>
+        </div>
         </form>
         <form action="{path_for name="batch-memberslist"}" method="post" id="listform">
         <table class="listing">
@@ -143,52 +141,16 @@
                     <th class="actions_row">{_T string="Actions"}</th>
                 </tr>
             </thead>
-{if $nb_members != 0}
-            <tfoot>
-                <tr>
-                    <td colspan="7" id="table_footer">
-                        <ul class="selection_menu">
-                            <li>{_T string="For the selection:"}</li>
-    {if $login->isAdmin() or $login->isStaff()}
-                            <li><input type="submit" id="delete" name="delete" value="{_T string="Delete"}"/></li>
-        {if $pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_DISABLED')}
-                            <li><input type="submit" id="sendmail" name="mailing" value="{_T string="Mail"}"/></li>
-        {/if}
-    {/if}
-                            <li>
-                                <input type="submit" id="attendance_sheet" name="attendance_sheet" value="{_T string="Attendance sheet"}"/>
-                            </li>
-                            <li><input type="submit" name="labels" value="{_T string="Generate labels"}"/></li>
-                            <li><input type="submit" name="cards" value="{_T string="Generate Member Cards"}"/></li>
-    {if $login->isAdmin() or $login->isStaff()}
-                            <li><input type="submit" name="csv" value="{_T string="Export as CSV"}"/></li>
-    {/if}
-    {if $plugin_batch_actions|@count != 0}
-        {foreach from=$plugin_batch_actions key=plugin_name item=action}
-          {include file=$action module_id=$plugin_name|replace:'batch_action_':''}
-        {/foreach}
-    {/if}
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="7" class="center">
-                        {_T string="Pages:"}<br/>
-                        <ul class="pages">{$pagination}</ul>
-                    </td>
-                </tr>
-            </tfoot>
-{/if}
             <tbody>
 {foreach from=$members item=member key=ordre}
     {assign var=rclass value=$member->getRowClass() }
                 <tr>
 {if $preferences->pref_show_id}
-                    <td class="{$rclass} right">{$member->id}</td>
+                    <td class="{$rclass} right" data-scope="id">{$member->id}</td>
 {else}
-                    <td class="{$rclass} right">{$ordre+1+($filters->current_page - 1)*$numrows}</td>
+                    <td class="{$rclass} right" data-scope="id">{$ordre+1+($filters->current_page - 1)*$numrows}</td>
 {/if}
-                    <td class="{$rclass} nowrap username_row">
+                    <td class="{$rclass} nowrap username_row" data-scope="row">
                         <input type="checkbox" name="member_sel[]" value="{$member->id}"/>
                     {if $member->isCompany()}
                         <img src="{base_url}/{$template_subdir}images/icon-company.png" alt="{_T string="[W]"}" width="16" height="16"/>
@@ -219,11 +181,11 @@
                         {assign var="mid" value=$member->id}
                         <a href="{path_for name="member" data=["id" => $member->id]}">{$member->sname}{if $member->company_name} ({$member->company_name}){/if}</a>
                     </td>
-                    <td class="{$rclass} nowrap">{$member->nickname|htmlspecialchars}</td>
-                    <td class="{$rclass} nowrap">{statusLabel id=$member->status}</td>
+                    <td class="{$rclass} nowrap" data-title="{_T string="Nickname"}">{$member->nickname|htmlspecialchars}</td>
+                    <td class="{$rclass} nowrap" data-title="{_T string="Status"}">{statusLabel id=$member->status}</td>
 {if $login->isAdmin() or $login->isStaff()}
-                    <td class="{$rclass}">{$member->getDues()}</td>
-                    <td class="{$rclass}">{$member->modification_date}</td>
+                    <td class="{$rclass}" data-title="{_T string="State of dues"}">{$member->getDues()}</td>
+                    <td class="{$rclass}" data-title="{_T string="Modified"}">{$member->modification_date}</td>
 {/if}
                     <td class="{$rclass} center nowrap actions_row">
                         <a href="{path_for name="editmember" data=["action" => {_T string="edit" domain="routes"}, "id" => $mid]}"><img src="{base_url}/{$template_subdir}images/icon-edit.png" alt="{_T string="[mod]"}" width="16" height="16" title="{_T string="%membername: edit informations" pattern="/%membername/" replace=$member->sname}"/></a>
@@ -248,6 +210,35 @@
 {/foreach}
             </tbody>
         </table>
+{if $nb_members != 0}
+        <div class="center cright">
+            {_T string="Pages:"}<br/>
+            <ul class="pages">{$pagination}</ul>
+        </div>
+        <ul class="selection_menu">
+            <li>{_T string="For the selection:"}</li>
+    {if $login->isAdmin() or $login->isStaff()}
+            <li><input type="submit" id="delete" name="delete" value="{_T string="Delete"}"/></li>
+        {if $pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_DISABLED')}
+            <li><input type="submit" id="sendmail" name="mailing" value="{_T string="Mail"}"/></li>
+        {/if}
+    {/if}
+            <li>
+                <input type="submit" id="attendance_sheet" name="attendance_sheet" value="{_T string="Attendance sheet"}"/>
+            </li>
+            <li><input type="submit" name="labels" value="{_T string="Generate labels"}"/></li>
+            <li><input type="submit" name="cards" value="{_T string="Generate Member Cards"}"/></li>
+    {if $login->isAdmin() or $login->isStaff()}
+            <li><input type="submit" name="csv" value="{_T string="Export as CSV"}"/></li>
+    {/if}
+    {if $plugin_batch_actions|@count != 0}
+        {foreach from=$plugin_batch_actions key=plugin_name item=action}
+            {include file=$action module_id=$plugin_name|replace:'batch_action_':''}
+        {/foreach}
+    {/if}
+        </ul>
+{/if}
+
         </form>
 {if $nb_members != 0}
         <div id="legende" title="{_T string="Legend"}">
@@ -309,59 +300,45 @@
 {block name="javascripts"}
         <script type="text/javascript">
 {if $nb_members != 0}
-        var _is_checked = true;
-        var _bind_check = function(){
-            $('#checkall').click(function(){
-                $('table.listing :checkbox[name="member_sel[]"]').each(function(){
-                    this.checked = _is_checked;
+        var _checkselection = function() {
+            var _checkeds = $('table.listing').find('input[type=checkbox]:checked').length;
+            if ( _checkeds == 0 ) {
+                var _el = $('<div id="pleaseselect" title="{_T string="No member selected" escape="js"}">{_T string="Please make sure to select at least one member from the list to perform this action." escape="js"}</div>');
+                _el.appendTo('body').dialog({
+                    modal: true,
+                    buttons: {
+                        Ok: function() {
+                            $(this).dialog( "close" );
+                        }
+                    },
+                    close: function(event, ui){
+                        _el.remove();
+                    }
                 });
-                _is_checked = !_is_checked;
                 return false;
-            });
-            $('#checkinvert').click(function(){
-                $('table.listing :checkbox[name="member_sel[]"]').each(function(){
-                    this.checked = !$(this).is(':checked');
-                });
-                return false;
-            });
+            }
+            return true;
         }
 {/if}
         {* Use of Javascript to draw specific elements that are not relevant is JS is inactive *}
         $(function(){
 {if $nb_members != 0}
-            $('#table_footer').parent().before('<tr><td id="checkboxes" colspan="4"><span class="fleft"><a href="#" id="checkall">{_T string="(Un)Check all"}</a> | <a href="#" id="checkinvert">{_T string="Invert selection"}</a></span></td></tr>');
+            var _checklinks = '<div class="checkboxes"><span class="fleft"><a href="#" class="checkall">{_T string="(Un)Check all"}</a> | <a href="#" class="checkinvert">{_T string="Invert selection"}</a></span><a href="#" class="show_legend fright">{_T string="Show legend"}</a></div>';
+            $('.listing').before(_checklinks);
+            $('.listing').after(_checklinks);
             _bind_check();
+            _bind_legend();
             $('#nbshow').change(function() {
                 this.form.submit();
             });
-            $('#checkboxes').after('<td class="right" colspan="3"><a href="#" id="show_legend">{_T string="Show legend"}</a></td>');
-            $('#legende h1').remove();
-            $('#legende').dialog({
-                autoOpen: false,
-                modal: true,
-                hide: 'fold',
-                width: '40%'
-            }).dialog('close');
-
-            $('#show_legend').click(function(){
-                $('#legende').dialog('open');
-                return false;
-            });
             $('.selection_menu input[type="submit"], .selection_menu input[type="button"]').click(function(){
-                var _checkeds = $('table.listing').find('input[type=checkbox]:checked').length;
-                if ( _checkeds == 0 ) {
-                    var _el = $('<div id="pleaseselect" title="{_T string="No member selected" escape="js"}">{_T string="Please make sure to select at least one member from the list to perform this action." escape="js"}</div>');
-                    _el.appendTo('body').dialog({
-                        modal: true,
-                        buttons: {
-                            Ok: function() {
-                                $(this).dialog( "close" );
-                            }
-                        },
-                        close: function(event, ui){
-                            _el.remove();
-                        }
-                    });
+
+                if ( this.id == 'delete' ) {
+                    //mass removal is handled from 2 steps removal
+                    return;
+                }
+
+                if (!_checkselection()) {
                     return false;
                 } else {
     {if $existing_mailing eq true}
@@ -397,10 +374,6 @@
                         _attendance_sheet_details();
                         return false;
                     }
-
-                    if ( this.id == 'delete' ) {
-                        return confirm('{_T string="Do you really want to delete all selected accounts (and related contributions)?" escape="js"}');
-                    }
                     return true;
                 }
             });
@@ -414,6 +387,7 @@
         });
 {if $nb_members != 0}
         {include file="js_removal.tpl"}
+        {include file="js_removal.tpl" selector="#delete" deleteurl="'{path_for name="batch-memberslist"}'" extra_check="if (!_checkselection()) {ldelim}return false;{rdelim}" extra_data="delete: true, member_sel: $('#listform input[type=\"checkbox\"]:checked').map(function(){ return $(this).val(); }).get()" method="POST"}
 
         var _attendance_sheet_details = function(){
             var _selecteds = [];

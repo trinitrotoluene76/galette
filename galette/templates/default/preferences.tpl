@@ -164,6 +164,11 @@
                     <input type="text" name="pref_rss_url" id="pref_rss_url" value="{$pref.pref_rss_url}"{if isset($required.pref_rss_url) and $required.pref_rss_url eq 1} required{/if}/>
                 </p>
                 <p>
+                    <label for="pref_galette_url" class="bline tooltip" title="{_T string="Galette base URL"}">{_T string="Galette base URL"}</label>
+                    <span class="tip">{_T string="Enter the base URL to your Galette instance. You should only change this parameter if the current page URL is not:<br/>%galette_url" pattern="/%galette_url/" replace=$preferences->getDefaultURL()|cat:{path_for name="preferences"}}</span>
+                    <input type="text" name="pref_galette_url" id="pref_galette_url" placeholder="{$preferences->getDefaultURL()}" value="{$pref.pref_galette_url}"{if isset($required.pref_galette_url) and $required.pref_galette_url eq 1} required{/if}/>
+                </p>
+                <p>
                     <label for="pref_show_id" class="bline tooltip" title="{_T string="Display member number in member related windows"}">{_T string="Show member number"}</label>
                     <span class="tip">{_T string="Display member number in member related windows"}</span>
                     <input type="checkbox" name="pref_show_id" id="pref_show_id" value="1" {if $pref.pref_show_id} checked="checked"{/if}{if isset($required.pref_show_id) and $required.pref_show_id eq 1} required{/if}/>
@@ -231,6 +236,7 @@
                             <input type="radio" name="pref_mail_method" id="qmail" value="{Galette\Core\GaletteMail::METHOD_QMAIL}" {if $pref.pref_mail_method eq constant('Galette\Core\GaletteMail::METHOD_QMAIL')}checked="checked"{/if}/><label for="qmail">{_T string="Using QMAIL server"}</label>
                         </li>
                     </ul>
+                    <br/><a href="{path_for name="testEmail"}#mail" id="btnmail" class="button">{_T string="Test mail settings"}</a>
                 </div>
                 <div id="smtp_parameters"{if $pref.pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_SMTP')} style="display: none;"{/if}>
                     <p>
@@ -250,6 +256,11 @@
                         <label for="pref_mail_smtp_secure" class="bline tooltip" title="{_T string="Do you want to use SMTP authentication?"}">{_T string="Use TLS for SMTP?"}</label>
                         <span class="tip">{_T string="Do you want to use server's TLS capabilities?<br/>For GMail, this will always be on."}</span>
                         <input type="checkbox" name="pref_mail_smtp_secure" id="pref_mail_smtp_secure" value="1" {if $pref.pref_mail_smtp_secure eq 1}checked="checked"{/if}{if isset($required.pref_mail_smtp_secure) and $required.pref_mail_smtp_secure eq 1} required{/if}/>
+                    </p>
+                    <p>
+                        <label for="pref_mail_allow_unsecure" class="bline tooltip" title="{_T string="Do you want to allow unsecure SMTP authentication?"}">{_T string="Allow unsecure TLS?"}</label>
+                        <span class="tip">{_T string="Do you want to allow 'unsecure' connections? This may be usefull if you server uses a self-signed certificate, and on some other cases."}</span>
+                        <input type="checkbox" name="pref_mail_allow_unsecure" id="pref_mail_allow_unsecure" value="1" {if $pref.pref_mail_allow_unsecure eq 1}checked="checked"{/if}{if isset($required.pref_mail_allow_unsecure) and $required.pref_mail_allow_unsecure eq 1} required{/if}/>
                     </p>
                 </div>
                 <div id="smtp_auth"{if $pref.pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_SMTP') && $pref.pref_mail_method neq constant('Galette\Core\GaletteMail::METHOD_GMAIL')} style="display: none;"{/if}>
@@ -486,6 +497,55 @@
 
                 $('#pref_bool_publicpages').change(function(){
                     $('#publicpages_visibility').toggleClass('hidden');
+                });
+
+                $('#btnmail').on('click', function(e) {
+                    e.preventDefault();
+                    var _this = $(this);
+                    var _value = $('#pref_email_newadh').val();
+                    $('body').append('<div id="testEmail" title="{_T string="Test mail settings" escape="js"}"><label for="email_adress">{_T string="Enter the email adress" escape="js"}</label><input type="text" name="email_adress" id="email_adress" value="' + _value + '"/></div>');
+                    $('#testEmail').dialog({
+                        'modal': true,
+                        'hide': 'fold',
+                        'width': '20em',
+                        create: function (event, ui) {
+                            if ($(window ).width() < 767) {
+                                $(this).dialog('option', {
+                                        'width': '95%',
+                                        'draggable': false
+                                });
+                            }
+                        },
+                        close: function(event, ui) {
+                            $('#testEmail').remove();
+                        },
+                        buttons: {
+                            {_T string="Send"}: function() {
+                                $.ajax({
+                                    url: _this.attr('href'),
+                                    type: 'GET',
+                                    data: {
+                                        adress: $('#email_adress').val()
+                                    },
+                                    {include file="js_loader.tpl"},
+                                    success: function(res) {
+                                        console.log(res);
+                                        //display message
+                                        $.ajax({
+                                            url: '{path_for name="ajaxMessages"}',
+                                            method: "GET",
+                                            success: function (message) {
+                                                $('#testEmail').prepend(message);
+                                            }
+                                        });
+                                    },
+                                    error: function () {
+                                        alert('{_T string="An error occured sending test email :(" escape="js"}');
+                                    }
+                                });
+                            }
+                        }
+                    });
                 });
             });
 

@@ -54,17 +54,28 @@ input, button, select {
 }
 
 input, textarea, select {
-    border: 1px solid #bbb;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    border:1px solid #bbb;
+    padding: .2em;
+    margin:0px;
+    -webkit-transition: all 0.30s ease-in-out;
+    -moz-transition: all 0.30s ease-in-out;
+    -ms-transition: all 0.30s ease-in-out;
+    -o-transition: all 0.30s ease-in-out;
+    outline: none;
 }
 
-input {
-    padding-right: 8px; /* to get the same size as input:required */
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #FFB619;
 }
 
 input:required {
     border:1px red solid;
-    border-left-width: 8px;
-    padding-right: 0;
+    border-left-width: .5em;
 }
 input:required:valid {
     border-color:green;
@@ -602,10 +613,10 @@ h1 #sendmail .ui-button-text {
 }
 
 #lostpassword, #btn_lostpassword {
-    background-image:url(images/icon-lost_pass.png), url("jquery-ui/images/ui-bg_glass_75_e6e6e6_1x400.png");
+    background-image:url(images/lost_pass.png), url("jquery-ui/images/ui-bg_glass_75_e6e6e6_1x400.png");
 }
 #lostpassword.ui-state-hover, #btn_lostpassword.ui-state-hover {
-    background-image:url(images/icon-lost_pass.png), url("jquery-ui/images/ui-bg_glass_75_ffb619_1x400.png");
+    background-image:url(images/lost_pass.png), url("jquery-ui/images/ui-bg_glass_75_ffb619_1x400.png");
 }
 
 #memberslist {
@@ -663,11 +674,17 @@ h1 #sendmail .ui-button-text {
    background-image:url(images/icon-info.png), url("jquery-ui/images/ui-bg_glass_75_ffb619_1x400.png");
 }
 
+#btnmail {
+    background-image:url(images/icon-mailing.png), url("jquery-ui/images/ui-bg_glass_75_e6e6e6_1x400.png");
+}
+#btnmail.ui-state-hover {
+    background-image:url(images/icon-mailing.png), url("jquery-ui/images/ui-bg_glass_75_ffb619_1x400.png");
+}
+
 #btnadd_small, #btnusers_small, #btnmanagers_small, #btninfo_small {
     position: absolute;
     top: .5em;
     right: .5em;
-    padding-left: 2em!important;
 }
 legend #btnadd_small {
     right: 2.5em;
@@ -827,6 +844,13 @@ legend #btnadd_small {
     background-image: url(images/icon-pdf.png), url("jquery-ui/images/ui-bg_glass_75_ffb619_1x400.png");
 }
 
+#btntools {
+    background-image: url(images/icon-tool.png), url(jquery-ui/images/ui-bg_glass_75_e6e6e6_1x400.png);
+}
+#btntools.ui-state-hover {
+    background-image: url(images/icon-tool.png), url(jquery-ui/images/ui-bg_glass_75_ffb619_1x400.png);
+}
+
 .left {
     text-align: left!important;
 }
@@ -836,7 +860,7 @@ legend #btnadd_small {
 }
 
 .center {
-    text-align: center;
+    text-align: center!important;
 }
 
 .center_table {
@@ -1298,6 +1322,10 @@ table.listing th, li.listing {
     vertical-align: middle;
 }
 
+table.listing .row-title {
+    display: none;
+}
+
 .bgfree {
     background: none!important;
 }
@@ -1452,6 +1480,8 @@ a.listing:hover {
     margin-left:17em;
     margin-top: 10px;
     padding: 0.5em;
+    position: relative;
+    min-height: 100vh;
 }
 
 #full_content {
@@ -1475,6 +1505,7 @@ table.listing.single {
 .infoline{
     vertical-align: top;
     width: 100%;
+    margin-bottom: 1em;
 }
 
 .infoline td {
@@ -1580,7 +1611,8 @@ table.listing.single {
 
 .attached {
     background: url(images/attached.png) 0 50% no-repeat;
-    padding-left: 20px;
+    padding: .2em 0 .2em 16px;
+    display: inline-block;
 }
 
 .membercount {
@@ -1969,6 +2001,8 @@ label.simplelabel {
 
 .fleft{float:left;}
 .fright{float:right;}
+.clear{clear: both;}
+.cright{clear: right;}
 
 input.large, span.large {
     width:90%!important;
@@ -2010,17 +2044,27 @@ td.photo img{
 #details_menu{
     padding:0;
     text-align:center;
-    float: right;
     list-style-type: none;
-    width: 10em;
+    width: 85%;
+    margin: 0 auto;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
+    justify-content: space-around;
 }
 #details_menu li {
+    width: 10em;
     margin-bottom:.5em;
 }
 
-.wrmenu {
-    margin-right: 10em;
+#details_menu li a {
+    height: calc(100% - 32px);
 }
+
 /*** /Voir adhérent ***/
 
 /*** Onglets ***/
@@ -2141,7 +2185,7 @@ td.photo img{
     background-color: #DDDDFF!important;
 }
 
-.listing tfoot tr:hover td {
+.listing tfoot tr:hover td, tr.checkboxes:hover td {
     background-color: transparent!important;
 }
 
@@ -2253,16 +2297,21 @@ td.photo img{
     width: 800px;
 }
 
-/** Mobile devices */
-@media (max-width: 640px) {
+.error {
+    max-width: 100em;
+    margin: 0 auto;
+}
 
-    /* Un message personnalisé */
+/** Mobile devices */
+@media (max-width: 767px) {
+
     body:before {
-        content: "BETA - Galette Version mobile - BETA";
+        content: "- Galette Version mobile -";
         display: block;
         color: #777;
         text-align: center;
         font-style: italic;
+        padding-top: .2em;
     }
 
     /* passer tous les éléments de largeur fixe en largeur automatique */
@@ -2272,13 +2321,17 @@ td.photo img{
         padding: auto !important;
     }
 
+    #details_menu, #member_stateofdue, .details {
+        width: 100%;
+    }
+
     /* fixer une largeur maximale  de 100 % aux éléments potentiellement problématiques */
-    img, table, td, blockquote, code, pre, textarea, input, object, embed, video {
+    table, td, blockquote, code, pre, textarea, input, object, embed, video {
         max-width: 100% !important;
     }
 
     /* gestion des mots longs */
-    textarea, table, td, th, code, pre, samp {
+    textarea, code, pre, samp {
         word-wrap: break-word; /* césure forcée */
         white-space: pre-line; /* passage à la ligne spécifique pour les éléments à châsse fixe */
     }
@@ -2292,8 +2345,217 @@ td.photo img{
         top:0;
         right:0;
     }
+
+    #titre, #listfilter {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /** Responsive menu */
+    #menu {
+        float: none;
+        position: absolute;
+        min-height: 100vh;
+    }
+
+    #content {
+        padding-top: 0;
+        margin: 0;
+        background-color: white;
+        transform: translateX(0) translateZ(0);
+        transition: transform .2s;
+        will-change: transform;
+    }
+
+    /* Button deco */
+    [class^="nav-button"] {
+        display: block;
+        z-index: 1;
+        height: 1.5rem;
+        width: 1.5rem;
+        background-color: transparent;
+        background-image: linear-gradient(to right, #333, #333),
+        linear-gradient(to right, #333, #333),
+        linear-gradient(to right, #333, #333);
+        background-position: center top, center, center bottom;
+        background-repeat: no-repeat;
+        background-size: 1.5rem .3rem;
+        padding: 0;
+        outline: 0;
+        border: 0;
+        cursor: pointer;
+        -webkit-tap-highlight-color:rgba(0,0,0,0);
+        float:left;
+        margin-top: .2em;
+        margin-left: .3em;
+    }
+
+    /* here's goes the push left effect */
+    body:target #content {
+        /* same as #content margin-left */
+        transform: translateX(17em);
+    }
+    .nav-button-close,
+    body:target .nav-button-open {
+        display: none;
+    }
+    .nav-button-open,
+    body:target .nav-button-close {
+        display: block;
+    }
+
+    /** Dashboard */
+    #desktop, #news {
+        width: 100%;
+    }
+
+    /** Forms */
+    .cssform p, .cssform div.p,
+    .galette_form p, .galette_form div.p {
+        padding-left: 0;
+    }
+
+    .cssform .bline, .galette_form label, .galette_form .bline {
+        margin-left: 0;
+        margin-bottom: .2em;
+        padding-right: 0;
+        display: block;
+        width: auto;
+    }
+
+    fieldset, fieldset.large {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .galette_form textarea,
+    .cssform textarea{
+        width: 100%;
+        height: 5em;
+    }
+
+    /** Tables */
+    table.listing {
+        width: 100%;
+    }
+
+    table.listing thead {
+        /* Accessibly hide <thead> on narrow viewports */
+        position: absolute;
+        clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+        clip: rect(1px, 1px, 1px, 1px);
+        padding: 0;
+        border: 0;
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
+    }
+
+     /* Set these items to display: block for narrow viewports */
+    table.listing tbody,
+    table.listing tr,
+    table.listing th,
+    table.listing td {
+        display: block;
+        padding: 0;
+        text-align: left;
+        white-space: normal;
+    }
+
+    table.listing.same tr, tr.same {
+        display: table-row;
+    }
+
+    table.listing.same td, tr.same td {
+        display: table-cell;
+        width: 100%;
+    }
+
+    table.listing td {
+        margin: 0;
+    }
+
+    table.listing tr {
+        margin-bottom: .5em;
+    }
+
+    table.listing td[data-scope="id"] {
+        float: left;
+        background: none!important;
+        color: #212121;
+        margin: .5em .2em 0 .2em;
+    }
+
+    table.listing td[data-scope="row"] {
+        background: #FFB619 url(jquery-ui/images/ui-bg_glass_65_ffb619_1x400.png) repeat-x scroll 50% 50%;
+        color: #212121;
+        font-weight: bold;
+        margin-top: .3em;
+        padding: .5em .2em;
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    table.listing td[data-scope="row"] a {
+        color: #212121;
+        vertical-align: middle;
+    }
+
+
+    table.listing td[data-scope="row"] a:hover {
+        color: #666!important;
+    }
+
+    table.listing td[data-scope="row"] input[type=checkbox],
+    table.listing td[data-scope="row"] img {
+        float: right;
+    }
+
+    table.listing td.center {
+        text-align: left!important;
+    }
+
+    span[data-title]:before,
+    td[data-title]:before {
+      content: attr(data-title);
+      display: inline-block;
+      width: 10em;
+      font-weight: bold;
+    }
+
+    table.listing img[src$="icon-empty.png"] {
+        display: none;
+    }
+
+    table.listing .actions_row,
+    table.listing .username_row {
+        width: auto;
+    }
+
+    table.listing td.actions_row {
+        text-align: center!important;
+    }
+
+    table.listing .row-title {
+        display: inline;
+    }
+
+    li.listing {
+        display: none;
+    }
+
+    .tbl_line_even span.label,
+    .tbl_line_odd span.label,
+    .tbl_line_even span.yesno,
+    .tbl_line_odd span.yesno,
+    .tbl_line_even span.yesnoadmin,
+    .tbl_line_odd span.yesnoadmin {
+        display: block;
+        width: auto;
+        text-align: left;
+    }
 }
-@media screen and (max-width:640px) and (orientation: landscape) {
+@media screen and (max-width:767px) and (orientation: landscape) {
     body {
         -webkit-text-size-adjust: 70%;
     }

@@ -329,6 +329,7 @@ class DynamicFields
                 foreach ($results as $r) {
                     $df = $this->getFieldType($r['field_type']);
                     if ((int)$r['field_type'] === self::CHOICE
+                        || (int)$r['field_type'] === self::LINE
                         || (int)$r['field_type'] === self::TEXT
                         || (int)$r['field_type'] === self::DATE
                         || (int)$r['field_type'] === self::BOOLEAN
@@ -445,7 +446,7 @@ class DynamicFields
                 }
             }
 
-            while (list($key, $value) = each($post)) {
+            foreach ($post as $key => $value) {
                 // if the field is enabled, check it
                 if (!isset($disabled[$key])) {
                     if (substr($key, 0, 11) == 'info_field_') {
@@ -472,7 +473,7 @@ class DynamicFields
                 }
             }
 
-            while (list($key, $value) = each($files)) {
+            foreach ($files as $key => $value) {
                 // if the field is disabled, skip it
                 if (isset($disabled[$key])) {
                     continue;
@@ -504,7 +505,7 @@ class DynamicFields
                 }
 
                 $max_size =
-                    $descriptions[$field_id]['field_size'] === 'NULL' ?
+                    empty($descriptions[$field_id]['field_size']) ?
                     self::DEFAULT_MAX_FILE_SIZE            * 1024:
                     $descriptions[$field_id]['field_size'] * 1024;
                 if ($files[$key]['size'] > $max_size) {
@@ -650,8 +651,8 @@ class DynamicFields
     public function setAllFields($form_name, $item_id, $all_values)
     {
         $ret = true;
-        while (list($field_id, $contents) = each($all_values)) {
-            while (list($val_index, $field_val) = each($contents)) {
+        foreach ($all_values as $field_id => $contents) {
+            foreach ($contents as $val_index => $field_val) {
                 $res = $this->setField(
                     $form_name,
                     $item_id,

@@ -109,6 +109,19 @@ class GaletteMail
                     $this->mail->Host = $preferences->pref_mail_smtp_host;
                     $this->mail->SMTPAuth   = $preferences->pref_mail_smtp_auth;
                     $this->mail->SMTPSecure = $preferences->pref_mail_smtp_secure;
+
+                    if (!$preferences->pref_mail_smtp_secure || $preferences->pref_mail_allow_unsecure) {
+                        //Allow "unsecure" SMTP connections if user has asked fot it or
+                        //if user did not request TLS explicitely
+                        $this->mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
+                    }
+
                     if ($preferences->pref_mail_smtp_port
                         && $preferences->pref_mail_smtp_port != ''
                     ) {
@@ -321,7 +334,7 @@ class GaletteMail
             }
         } catch (\Exception $e) {
             Analog::log(
-                'Error sending message: ' . $e.getMessage(),
+                'Error sending message: ' . $e->getMessage(),
                 Analog::ERROR
             );
             $this->errors[] = $e->getMessage();
@@ -446,6 +459,10 @@ class GaletteMail
     public function getWrappedMessage()
     {
         if ($this->word_wrap > 0) {
+            if ($this->mail === null) {
+                $this->initMailer();
+            }
+
             return $this->mail->wrapText(
                 $this->message,
                 $this->word_wrap

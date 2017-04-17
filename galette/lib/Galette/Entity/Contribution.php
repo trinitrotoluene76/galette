@@ -169,14 +169,13 @@ class Contribution
                 $this->_member = (int)$args['adh'];
             }
             if (isset($args['trans'])) {
-                $this->_transaction = new Transaction($this->zdb, (int)$args['trans']);
+                $this->_transaction = new Transaction($this->zdb, $this->login, (int)$args['trans']);
                 if (!isset($this->_member)) {
                     $this->_member = (int)$this->_transaction->member;
                 }
                 $this->_amount = $this->_transaction->getMissingAmount();
             }
-            $this->_type = new ContributionsTypes($this->zdb, (int)$args['type']);
-            $this->_is_cotis = (bool)$this->_type->extension;
+            $this->type = (int)$args['type'];
             //calculate begin date for cotisation
             $this->_begin_date = $this->_date;
             if ($this->_is_cotis) {
@@ -299,15 +298,10 @@ class Contribution
 
         $transpk = Transaction::PK;
         if ($r->$transpk != '') {
-            $this->_transaction = new Transaction($this->zdb, (int)$r->$transpk);
+            $this->_transaction = new Transaction($this->zdb, $this->login, (int)$r->$transpk);
         }
 
-        $this->_type = new ContributionsTypes($this->zdb, (int)$r->id_type_cotis);
-        if ($this->_type->extension == 1) {
-            $this->_is_cotis = true;
-        } else {
-            $this->_is_cotis = false;
-        }
+        $this->type = (int)$r->id_type_cotis;
     }
 
     /**
@@ -410,7 +404,7 @@ class Contribution
                         break;
                     case Transaction::PK:
                         if ($value != '') {
-                            $this->_transaction = new Transaction($this->zdb, (int)$value);
+                            $this->_transaction = new Transaction($this->zdb, $this->login, (int)$value);
                         }
                         break;
                     case 'duree_mois_cotis':
@@ -427,7 +421,7 @@ class Contribution
         }
 
         // missing required fields?
-        while (list($key, $val) = each($required)) {
+        foreach ($required as $key => $val) {
             if ($val === 1) {
                 $prop = '_' . $this->_fields[$key]['propname'];
                 if (!isset($disabled[$key])
@@ -454,7 +448,7 @@ class Contribution
             Analog::log(
                 'Some errors has been throwed attempting to edit/store a contribution' .
                 print_r($errors, true),
-                Analog::DEBUG
+                Analog::ERROR
             );
             return $errors;
         } else {
@@ -1170,7 +1164,7 @@ class Contribution
             switch ($name) {
                 case 'transaction':
                     if (is_int($value)) {
-                        $this->$rname = new Transaction($this->zdb, $value);
+                        $this->$rname = new Transaction($this->zdb, $this->login, $value);
                     } else {
                         Analog::log(
                             'Trying to set a transaction from an id that is not an integer.',

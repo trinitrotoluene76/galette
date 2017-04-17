@@ -71,6 +71,26 @@
 {if $require_tree}
     <script type="text/javascript" src="{base_url}/{$jquery_dir}jquery.jstree.js"></script>
 {/if}
+{if $autocomplete}
+    <script type="text/javascript" src="{base_url}/{$jquery_dir}jquery-ui-{$jquery_ui_version}/jquery.ui.menu.min.js"></script>
+    <script type="text/javascript" src="{base_url}/{$jquery_dir}jquery-ui-{$jquery_ui_version}/jquery.ui.autocomplete.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#ville_adh, #lieu_naissance').autocomplete({
+                source: function (request, response) {
+                    $.post('{path_for name="suggestTown"}', request, response);
+                },
+                minLength: 2
+            });
+            $('#pays_adh').autocomplete({
+                source: function (request, response) {
+                    $.post('{path_for name="suggestCountry"}', request, response);
+                },
+                minLength: 2
+            });
+        });
+    </script>
+{/if}
 {* If some additionnals headers should be added from plugins, we load the relevant template file
 We have to use a template file, so Smarty will do its work (like replacing variables). *}
 {if $headers|@count != 0}
@@ -82,9 +102,14 @@ We have to use a template file, so Smarty will do its work (like replacing varia
     <meta http-equiv="refresh" content="{$head_redirect.timeout};url={$head_redirect.url}" />
 {/if}
 </head>
-<body>
-        {* IE7 and above are no longer supported *}
-        <!--[if lt IE 8]>
+<body id="galette_body">
+{if isset($GALETTE_DISPLAY_ERRORS) && $GALETTE_DISPLAY_ERRORS && $GALETTE_MODE != 'DEV'}
+        <div id="oldie">
+            <p>{_T string="Galette is configured to display errors. This must be avoided in production environments."}</p>
+        </div>
+{/if}
+        {* IE8 and above are no longer supported *}
+        <!--[if lte IE 8]>
         <div id="oldie">
             <p>{_T string="Your browser version is way too old and no longer supported in Galette for a while."}</p>
             <p>{_T string="Please update your browser or use an alternative one, like Mozilla Firefox (http://mozilla.org)."}</p>
@@ -158,6 +183,9 @@ We have to use a template file, so Smarty will do its work (like replacing varia
             <li{if $cur_route eq "titles"} class="selected"{/if}><a href="{path_for name="titles"}" title="{_T string="Manage titles"}">{_T string="Titles"}</a></li>
             <li{if $cur_route eq "pdfModels"} class="selected"{/if}><a href="{path_for name="pdfModels"}" title="{_T string="Manage PDF models"}">{_T string="PDF models"}</a></li>
             <li><a href="{path_for name="emptyAdhesionForm"}" title="{_T string="Download empty adhesion form"}">{_T string="Empty adhesion form"}</a></li>
+    {if $login->isSuperAdmin()}
+            <li><a href="{path_for name="fakeData"}">{_T string="Generate fake data"}</a></li>
+    {/if}
         </ul>
 {/if}
 
@@ -176,6 +204,8 @@ We have to use a template file, so Smarty will do its work (like replacing varia
     </div>
     <div id="content"{if $contentcls} class="{$contentcls}"{/if}>
         <h1 id="titre">
+            <a href="#galette_body" class="nav-button-open" aria-label="open navigation"></a>
+            <a href="#" class="nav-button-close" aria-label="close navigation"></a>
             {$page_title}
             {if $cur_route neq 'mailing' and $existing_mailing eq true}
                 <a class="button" id="sendmail" href="{path_for name="mailing"}" title="{_T string="A mailing exists in the current session. Click here if you want to resume or cancel it."}">

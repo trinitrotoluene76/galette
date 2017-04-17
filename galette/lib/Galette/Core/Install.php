@@ -69,7 +69,7 @@ class Install
     const UPDATE = 'u';
 
     //db version/galette version mapper
-    private $_versions_mapper = array(
+    private $versions_mapper = array(
         '0.700' => '0.70',
         '0.701' => '0.71',
         '0.702' => '0.74',
@@ -628,7 +628,7 @@ class Install
         $this->_report = array();
         $scripts_path = GALETTE_ROOT . '/install/scripts/';
 
-        while (list($key, $val) = each($update_scripts)) {
+        foreach ($update_scripts as $key => $value) {
             if (substr($val, -strlen('.sql')) === '.sql') {
                 //just a SQL script, run it
                 $script = fopen($scripts_path . $val, 'r');
@@ -1209,7 +1209,7 @@ define('PREFIX_DB', '" . $this->_db_prefix . "');
     }
 
     /**
-     * Set instaleld version if we're upgrading
+     * Set installed version if we're upgrading
      *
      * @param string $version Installed version
      *
@@ -1231,8 +1231,8 @@ define('PREFIX_DB', '" . $this->_db_prefix . "');
     {
         try {
             $db_ver = $zdb->getDbVersion();
-            if (isset($this->_versions_mapper[$db_ver])) {
-                return $this->_versions_mapper[$db_ver];
+            if (isset($this->versions_mapper[$db_ver])) {
+                return $this->versions_mapper[$db_ver];
             } else {
                 return $db_ver;
             }

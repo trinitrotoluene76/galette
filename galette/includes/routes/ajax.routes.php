@@ -35,6 +35,8 @@
  * @since     0.8.2dev 2014-11-11
  */
 
+use Galette\Entity\Adherent;
+
 $app->group(__('/ajax', 'routes'), function () {
     $this->get(
         __('/messages', 'routes'),
@@ -79,7 +81,7 @@ $app->group(__('/ajax', 'routes'), function () {
             fwrite($fp, $raw_file);
             fclose($fp);
 
-            $adh = new \Galette\Entity\Adherent($this->zdb, (int)$mid);
+            $adh = new Adherent($this->zdb, (int)$mid);
 
             $res = $adh->picture->store(
                 array(
@@ -107,4 +109,81 @@ $app->group(__('/ajax', 'routes'), function () {
             return $response->withJson($ret);
         }
     )->setName('photoDnd');
+
+    $this->post(
+        __('/suggest', 'routes') . __('/towns', 'routes'),
+        function ($request, $response) {
+            $post = $request->getParsedBody();
+
+            $ret = [];
+
+            try {
+                $select1 = $this->zdb->select(Adherent::TABLE);
+                $select1->columns(['ville_adh']);
+                $select1->where->like('ville_adh', '%' . html_entity_decode($post['term']) . '%');
+
+                $select2 = $this->zdb->select(Adherent::TABLE);
+                $select2->columns(['lieu_naissance']);
+                $select2->where->like('lieu_naissance', '%' . html_entity_decode($post['term']) . '%');
+
+                $select1->combine($select2);
+
+                $select = $this->zdb->sql->select();
+                $select->from(['sub' => $select1])
+                    ->order('ville_adh ASCC')
+                    ->limit(10);
+
+                $towns = $this->zdb->execute($select);
+
+                foreach ($towns as $town) {
+                    $ret[] = [
+                        'id'    => $town->ville_adh,
+                        'label' => $town->ville_adh
+                    ];
+                }
+            } catch (\Exception $e) {
+                Analog::log(
+                    'Something went wrong is towns suggestion: ' . $e->getMessage(),
+                    Analog::WARNING
+                );
+                throw $e;
+            }
+
+            return $response->withJson($ret);
+        }
+    )->setName('suggestTown');
+
+    $this->post(
+        __('/suggest', 'routes') . __('/countries', 'routes'),
+        function ($request, $response) {
+            $post = $request->getParsedBody();
+
+            $ret = [];
+
+            try {
+                $select = $this->zdb->select(Adherent::TABLE);
+                $select->columns(['pays_adh']);
+                $select->where->like('pays_adh', '%' . html_entity_decode($post['term']) . '%');
+                $select->limit(10);
+                $select->order(['pays_adh ASC']);
+
+                $towns = $this->zdb->execute($select);
+
+                foreach ($towns as $town) {
+                    $ret[] = [
+                        'id'    => $town->pays_adh,
+                        'label' => $town->pays_adh
+                    ];
+                }
+            } catch (\Exception $e) {
+                Analog::log(
+                    'Something went wrong is countries suggestion: ' . $e->getMessage(),
+                    Analog::WARNING
+                );
+                throw $e;
+            }
+
+            return $response->withJson($ret);
+        }
+    )->setName('suggestCountry');
 });
