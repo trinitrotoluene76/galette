@@ -9,9 +9,6 @@
 {*  Amaury, evol #34. Supression de la balise <ul id="details_menu"> *}
 
     <div class="bigtable wrmenu">
-		{*  Amaury, evol #34. modification de la balise "member_stateofdue"*}
-        <div id="member_stateofdue" class="{$member->getRowClass()}">{_T string="Validate this member if you want to modify"}</div>
-		{*  fin de modif *}
 {if $member->hasParent() or $member->hasChildren()}
         <table class="details">
             <caption class="ui-state-active ui-corner-top">{_T string="Family"}</caption>
