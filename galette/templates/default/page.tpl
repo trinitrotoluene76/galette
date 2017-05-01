@@ -111,7 +111,10 @@ We have to use a template file, so Smarty will do its work (like replacing varia
             <li{if $PAGENAME eq "desktop.php"} class="selected"{/if}><a href="{$galette_base_path}desktop.php" title="{_T string="Go to Galette's dashboard"}">{_T string="Dashboard"}</a></li>
             <li{if $PAGENAME eq "gestion_adherents.php"} class="selected"{/if}><a href="{$galette_base_path}gestion_adherents.php" title="{_T string="View, search into and filter member's list"}">{_T string="List of members"}</a></li>
             <li{if $PAGENAME eq "advanced_search.php"} class="selected"{/if}><a href="{$galette_base_path}advanced_search.php" title="{_T string="Perform advanced search into members list"}">{_T string="Advanced search"}</a></li>
-            <li{if $PAGENAME eq "gestion_groupes.php"} class="selected"{/if}><a href="{$galette_base_path}gestion_groupes.php" title="{_T string="View and manage groups"}">{_T string="Manage groups"}</a></li>
+            {* Amaury évite qu'un responsable de groupe puisse modifier ou supprimer son propre groupe evol#69 *}
+			{if $login->isAdmin() or $login->isStaff()}
+			<li{if $PAGENAME eq "gestion_groupes.php"} class="selected"{/if}><a href="{$galette_base_path}gestion_groupes.php" title="{_T string="View and manage groups"}">{_T string="Manage groups"}</a></li>
+			{/if}
   {/if}
   {if $login->isAdmin() or $login->isStaff()}
             <li{if $PAGENAME eq "gestion_contributions.php"} class="selected"{/if}><a href="{$galette_base_path}gestion_contributions.php?id_adh=all" title="{_T string="View and filter contributions"}">{_T string="List of contributions"}</a></li>
