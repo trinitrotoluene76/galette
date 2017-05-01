@@ -100,7 +100,7 @@ if ( isset($_POST["nom_adh"]) ) {
 	//--------------------------------------->
 	//modification ajouté le 25/09/14 par Amaury Froment pour l'evol #43 interdiction doubons/homonymes
 	if($member->is_doublon($_POST['nom_adh'],$_POST['prenom_adh'],$_POST['ddn_adh'])>0)
-	{$valid=false;}
+	{$valid=array("Le même prénom, nom et date de naissance existent déjà dans la base. Faites une récupération du mot de passe");}
 	//-------------------------------->fin de l'ajout d'Amaury
     if ( $valid !== true ) {
         $error_detected = array_merge($error_detected, $valid);
