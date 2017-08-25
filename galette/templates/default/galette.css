@@ -2001,6 +2001,7 @@ td.photo img{
 
 .wrmenu {
     margin-right: 10em;
+	min-width:15em;
 }
 /*** /Voir adhérent ***/
 
