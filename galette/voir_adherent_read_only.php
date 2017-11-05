@@ -204,7 +204,7 @@ if ( isset($session['account_success']) ) {
     unset($session['account_success']);
 }
 $tpl->assign('success_detected', $success_detected);
-$content = $tpl->fetch('voir_adherent.tpl');
+$content = $tpl->fetch('voir_adherent_read_only.tpl');
 $tpl->assign('content', $content);
 $tpl->display('page.tpl');
 
