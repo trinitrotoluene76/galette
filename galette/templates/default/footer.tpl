@@ -2,7 +2,10 @@
 		{* Ajout d'Amaury Ajout du message CNIL sur le droit de modif des infos des adhérents *}
 		{_T string="CNIL"}</br>
 		{* fin *}
-            <a id="copyright" href="http://galette.eu/">Galette {$GALETTE_VERSION}</a>
+            <a href="http://asnexter.fr/joomla/index.php/fr/2-non-categorise/30-mentions-legales" target="blank">Mentions légales</a> - 
+			<a href="http://asnexter.fr/joomla/index.php/fr/33-informations-pratiques/93-protection-des-donnees" target="blank">Protection des données</a> - 
+			<a href="http://asnexter.fr/joomla/index.php/fr/informations-pratiques/nous-contacter" target="blank">Nous contacter</a></br></br>
+			<a id="copyright" href="http://galette.eu/">Galette {$GALETTE_VERSION}</a>
 {if $login->isLogged() &&  ($login->isAdmin() or $login->isStaff())}
             <br/><a id="sysinfos" href="{$galette_base_path}sysinfos.php">{_T string="System informations"}</a>
 {/if}
@@ -17,11 +20,11 @@
                
 				<ul>
                     <li><strong>{_T string="The project: "}</strong></li>
+					{* Ajout d'Amaury ppt de présentation de galette *}
+					<li><a href="{$galette_base_path}{$subscription_dir}download/AS_Nexter_presentation_galette_subscription_indF.ppsx" target="blank">Presentation_de_Galette</a></li>
+					{* fin *}
                     <li><a href="http://galette.eu">{_T string="Website"}</a></li>
                     <li><a href="http://galette.eu/documentation/">{_T string="Documentation"}</a></li>
-					{* Ajout d'Amaury ppt de présentation de galette *}
-					<li><a href="{$galette_base_path}{$subscription_dir}download/AS_Nexter_presentation_galette_indB.pptx" target="blank">Presentation_de_Galette</a></li>
-					{* fin *}
                 </ul>
                 <ul>
                     <li>
